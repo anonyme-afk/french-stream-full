@@ -13,7 +13,7 @@ const { MovieSeriesAdapter } = require('./src/adapters/movies');
 const { score, isMatch } = require('./src/utils/normalize');
 const { fetchText } = require('./src/http');
 const log = require('./src/logger');
-const { buildStreams } = require('./src/streams');
+const { buildStreams, resolveDirectStream } = require('./src/streams');
 
 const SITES = loadSites();
 const adapters = {};
@@ -22,7 +22,7 @@ if (SITES.movieSeriesSite && SITES.movieSeriesSite.enabled) adapters.movies = ne
 
 const manifest = {
   id: 'org.frenchstreamfull.addon',
-  version: '1.0.2',
+  version: '1.0.3',
   name: 'French-Stream-Full',
   description: 'Films, series, animes VF / VOSTFR — French-Stream + French-Manga.',
   logo: 'https://french-stream-full.onrender.com/logo.png',
@@ -238,6 +238,21 @@ app.get('/logo.svg', (req, res) => {
   res.setHeader('Content-Type', 'image/svg+xml');
   res.setHeader('Cache-Control', 'public, max-age=86400');
   res.sendFile(path.join(publicDir, 'logo.svg'));
+});
+
+// Endpoint de lecture Stremio natif : redirige vers le flux direct m3u8 / mp4
+app.get('/play', async (req, res) => {
+  const source = req.query.source;
+  if (!source) return res.status(400).send('Source manquante');
+  try {
+    const direct = await resolveDirectStream(source);
+    if (direct && direct.url) {
+      return res.redirect(307, direct.url);
+    }
+    return res.redirect(307, source);
+  } catch (e) {
+    return res.redirect(307, source);
+  }
 });
 
 // Routeur officiel SDK Stremio
