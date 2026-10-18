@@ -7,8 +7,24 @@
 // Les embeds (vidzy/uqload/...) sont des pages lecteurs : Stremio les ouvre via
 // behaviorHints.notWebReady + externalUrl. Les mp4/m3u8 directs sont lus nativement.
 const store = require('./store');
-const { probeStream } = require('./http');
+const { fetchText, probeStream } = require('./http');
 const log = require('./logger');
+
+async function tryUnpackDirectStream(url) {
+  if (/uqload\./i.test(url)) {
+    try {
+      const r = await fetchText(url, { headers: { Referer: 'https://fs26.lol/' } });
+      const m = r.text && r.text.match(/eval\(function\(p,a,c,k,e,d\)[\s\S]+?\.split\('\|'\)\)\)/);
+      if (m) {
+        const fn = new Function('return ' + m[0].replace('eval(', '('));
+        const unp = fn();
+        const match = unp && unp.match(/https?:\/\/[^\s"'<>]+\.(?:mp4|m3u8)[^\s"'<>]*/i);
+        if (match) return { url: match[0], streamType: 'hls' };
+      }
+    } catch {}
+  }
+  return null;
+}
 
 function cacheFresh(entry, maxAgeMin = 10) {
   if (!entry || !entry.verifiedAt) return null;
@@ -53,6 +69,7 @@ async function buildStreams(pages, want, ctx) {
         store.logDiag(p.site, p.url, 'stream', 'empty', 'Aucune source extraite (page sans embeds decouverts)');
         // Fallback honnete : ouvrir la page source dans le navigateur
         streams.push({
+          name: 'FSF [FR]',
           externalUrl: p.url.split('#')[0],
           title: `${title || p.site}\nOuvrir la page source (lecteur anti-bot)`
         });
@@ -60,21 +77,36 @@ async function buildStreams(pages, want, ctx) {
       }
       const items = [];
       for (const s of list.slice(0, 8)) {
+        const langStr = (s.lang ? s.lang.toUpperCase() : 'FR');
+        const hostName = (s.host || p.site || 'Source').toUpperCase();
+        const epTag = s.episode != null ? ` Ep ${s.episode}` : '';
+
+        // Verification de decompactage flux direct (ex: uqload HLS)
+        const directHls = await tryUnpackDirectStream(s.url);
+        if (directHls && directHls.url) {
+          items.push({
+            name: `FSF [${langStr}]`,
+            title: `${title}${epTag}\n${hostName} • Direct ${directHls.streamType.toUpperCase()}`,
+            url: directHls.url,
+            behaviorHints: { notWebReady: false }
+          });
+        }
+
         const probe = await probeStream(s.url).catch(() => ({ compatible: false }));
         const direct = probe.compatible && probe.streamType;
-        const epTag = s.episode != null ? ` Ep ${s.episode}` : '';
         if (direct) {
           items.push({
+            name: `FSF [${langStr}]`,
+            title: `${title}${epTag}\n${hostName} • ${probe.streamType}`,
             url: s.url,
-            title: `${title}${epTag}\n${s.host || p.site} • ${s.lang || 'fr'} • ${probe.streamType}`,
             behaviorHints: { notWebReady: probe.streamType !== 'mp4' }
           });
         } else {
-          // Embed lecteur : on le propose en externe (Stremio ouvre le navigateur),
-          // avec hub fstream en alternative si configure.
+          // Embed lecteur : on le propose en externe (Stremio ouvre le navigateur)
           items.push({
-            externalUrl: s.url,
-            title: `${title}${epTag}\n${s.host || p.site} • ${s.lang || 'fr'} • lecteur externe`
+            name: `FSF [${langStr}]`,
+            title: `${title}${epTag}\n${hostName} • Lecteur Web`,
+            externalUrl: s.url
           });
         }
       }

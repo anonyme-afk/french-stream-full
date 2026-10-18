@@ -9,6 +9,18 @@ function decode(s) {
   return (s || '').replace(/&amp;/g, '&').replace(/&#0?39;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\\'/g, "'").trim();
 }
 
+let globalCookies = 'fsschal=k7x2m9q4v3b8; dle_skin=FrenchStream; ';
+
+function extractCookie(html) {
+  const m = (html || '').match(/document\.cookie\s*=\s*["']([^"']+)["']/i);
+  if (m) {
+    const cookie = m[1].split(';')[0];
+    if (cookie && !globalCookies.includes(cookie)) {
+      globalCookies += cookie + '; ';
+    }
+  }
+}
+
 class DleAdapter {
   constructor(siteKey, siteCfg, episodesApi) {
     this.siteKey = siteKey;
@@ -23,7 +35,7 @@ class DleAdapter {
     try { return new URL(decode(href), this.baseUrl + '/').href; } catch { return null; }
   }
 
-  async ajaxSearch(query) {
+  async ajaxSearch(query, retry = true) {
     const url = this.baseUrl + '/engine/ajax/search.php';
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 20000);
@@ -34,12 +46,17 @@ class DleAdapter {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36',
           'Accept-Language': 'fr-FR,fr;q=0.9', 'Accept': '*/*',
           'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-          'X-Requested-With': 'XMLHttpRequest', Referer: this.baseUrl + '/'
+          'X-Requested-With': 'XMLHttpRequest', Referer: this.baseUrl + '/',
+          'Cookie': globalCookies
         },
         body: 'query=' + encodeURIComponent(query) + '&page=1'
       });
       const text = await res.text().catch(() => '');
       clearTimeout(t);
+      if (text.includes('Verification de votre navigateur') && retry) {
+        extractCookie(text);
+        return this.ajaxSearch(query, false);
+      }
       return { ok: res.ok, status: res.status, text };
     } catch (e) { clearTimeout(t); throw e; }
   }

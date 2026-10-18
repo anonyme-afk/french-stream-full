@@ -75,11 +75,43 @@ class MovieSeriesAdapter extends DleAdapter {
       }
       return { title, altTitles: [], year: yearM ? +yearM[1] : null, type: 'series', synopsis: desc, poster: poster ? this.abs(poster) : null, episodes, sources, newsId };
     }
-    // FILM : lecteurs injectes en JS anti-bot -> on expose les embeds directs trouves + hub
+    // FILM : interrogation API film_api.php?id={newsId}
+    if (newsId) {
+      try {
+        const apiUrl = this.baseUrl + '/engine/ajax/film_api.php?id=' + encodeURIComponent(newsId);
+        const rApi = await fetchText(apiUrl, {
+          site: this.siteKey,
+          headers: { 'X-Requested-With': 'XMLHttpRequest', Referer: pageUrl }
+        });
+        if (rApi.ok && rApi.text) {
+          const data = JSON.parse(rApi.text);
+          if (data && data.players) {
+            for (const [host, versions] of Object.entries(data.players)) {
+              if (typeof versions === 'string') {
+                sources.push({ label: `Film • ${host}`, url: versions, quality: 'HD', lang, episode: null, version: lang, host });
+              } else if (typeof versions === 'object' && versions) {
+                for (const [ver, u] of Object.entries(versions)) {
+                  if (u && typeof u === 'string') {
+                    const sLang = /vost/i.test(ver) ? 'vostfr' : (ver === 'default' ? lang : 'fr');
+                    sources.push({ label: `Film ${ver !== 'default' ? ver.toUpperCase() : ''} • ${host}`, url: u, quality: 'HD', lang: sLang, episode: null, version: sLang, host });
+                  }
+                }
+              }
+            }
+          }
+        }
+      } catch (e) {
+        log.warn(this.siteKey, 'film-api', 'film_api fail ' + newsId);
+      }
+    }
+
+    // Fallback : regex direct embeds
     const embeds = [...h.matchAll(/https?:\/\/(?:www\.)?((?:fsvid|vidzy|uqload|voe|vidoza|dood|streamtape|filemoon|multiup|trakx|netu|luluvid|vidhsareup)[^"'\s<>]*)/gi)].map((m) => m[0].slice(0, 200));
     [...new Set(embeds)].slice(0, 8).forEach((u) => {
       const host = (u.match(/\/\/(?:www\.)?([a-z0-9-]+)/i) || [])[1] || 'lecteur';
-      sources.push({ label: `Film • ${host}`, url: u, quality: 'HD', lang, episode: null, version: lang, host });
+      if (!sources.find((s) => s.url === u)) {
+        sources.push({ label: `Film • ${host}`, url: u, quality: 'HD', lang, episode: null, version: lang, host });
+      }
     });
     return { title, altTitles: [], year: yearM ? +yearM[1] : null, type: 'movie', synopsis: desc, poster: poster ? this.abs(poster) : null, episodes, sources, newsId };
   }

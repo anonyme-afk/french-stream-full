@@ -17,9 +17,10 @@ async function fetchText(url, opts = {}) {
         signal: ctrl.signal,
         redirect: 'follow',
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) French-Stream-Full/1.0',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36',
           'Accept-Language': 'fr-FR,fr;q=0.9',
           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Cookie': 'fsschal=k7x2m9q4v3b8; dle_skin=FrenchStream;',
           ...(opts.headers || {})
         }
       });
