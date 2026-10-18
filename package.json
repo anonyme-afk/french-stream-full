@@ -12,6 +12,9 @@
     "test": "node src/tools/diagnose.js --selftest"
   },
   "dependencies": {
-    "stremio-addon-sdk": "^1.6.12"
+    "stremio-addon-sdk": "^1.6.5"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
