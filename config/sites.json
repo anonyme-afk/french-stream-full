@@ -1,0 +1,35 @@
+{
+  "animeSite": {
+    "enabled": true,
+    "name": "French-Manga",
+    "baseUrl": "https://w16.french-manga.net",
+    "ajaxSearch": "/engine/ajax/search.php",
+    "episodesApi": "/engine/ajax/manga_episodes_api.php?id="
+  },
+  "movieSeriesSite": {
+    "enabled": true,
+    "name": "French-Stream",
+    "baseUrl": "https://fs26.lol",
+    "ajaxSearch": "/engine/ajax/search.php",
+    "serieStatic": "/static/series/{id}.js",
+    "serieFallbacks": ["/data/eps_{id}.txt", "/ep-data.php?id={id}"],
+    "filmMenu": "/engine/ajax/film-menu.php?news_id={id}"
+  },
+  "redirectService": {
+    "enabled": true,
+    "name": "FStream-Hub",
+    "baseUrl": "https://fstream.net",
+    "mode": "hub",
+    "target": "https://fs26.lol",
+    "note": "HUB : le bouton 'Regarder en streaming' pointe vers fs26.lol. Si fstream change de cible, mets la nouvelle URL dans target."
+  },
+  "settings": {
+    "lang": "fr",
+    "defaultQuality": "HD",
+    "cacheSearchMinutes": 60,
+    "cacheStreamMinutes": 10,
+    "cacheMetaDays": 30,
+    "requestTimeoutMs": 20000,
+    "maxConcurrency": 3
+  }
+}

@@ -1,0 +1,4 @@
+node_modules/
+data/fsf.json
+data/*.log
+.env

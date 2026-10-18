@@ -1,0 +1,33 @@
+HEBERGER French-Stream-Full GRATUITEMENT (Render, 10 min)
+=======================================================
+GitHub ne peut PAS executer l'add-on (pas de serveur). GitHub = stockage.
+Render.com = execution gratuite 24/7.
+
+ETAPE 1 : mettre le code sur GitHub
+  1. Va sur https://github.com/new, cree un repo "french-stream-full" (Public).
+  2. Dans PowerShell, dossier du projet :
+       git init
+       git add .
+       git commit -m "French-Stream-Full v1.0.0"
+       git branch -M main
+       git remote add origin https://github.com/TON-PSEUDO/french-stream-full.git
+       git push -u origin main
+
+ETAPE 2 : lancer sur Render (gratuit)
+  1. Va sur https://render.com, connecte-toi avec GitHub.
+  2. New + > Web Service > choisis ton repo french-stream-full.
+  3. Reglages :
+       Build Command : npm install
+       Start Command : node addon.js
+       Plan : Free
+  4. Deploy. Tu obtiens : https://french-stream-full.onrender.com/manifest.json
+     (le 1er appel peut prendre 30-60s : le plan gratuit s'endort apres inactivite)
+
+ETAPE 3 : installer dans Stremio
+  Stremio > Addons > Installer via URL > colle ton URL /manifest.json
+
+NOTES :
+- data/fsf.json est ignore par git (.gitignore) : l'index se reconstruit seul a l'usage.
+- Si fs26/french-manga changent de domaine, mets a jour config/sites.json + redeploie.
+- Alternative 100% locale (zero cloud) : laisse `node addon.js` ouvert sur ton PC
+  et installe http://127.0.0.1:7000/manifest.json dans Stremio.

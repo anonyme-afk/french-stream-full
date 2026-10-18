@@ -1,0 +1,17 @@
+{
+  "name": "french-stream-full",
+  "version": "1.0.0",
+  "description": "French-Stream-Full - Add-on Stremio personnel, modulaire : films, series, animes via sites configurables",
+  "main": "addon.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node addon.js",
+    "dev": "node addon.js --dev",
+    "diagnose": "node src/tools/diagnose.js",
+    "reindex": "node src/tools/reindex.js",
+    "test": "node src/tools/diagnose.js --selftest"
+  },
+  "dependencies": {
+    "stremio-addon-sdk": "^1.6.12"
+  }
+}
