@@ -18,9 +18,11 @@ if (SITES.movieSeriesSite.enabled) adapters.movies = new MovieSeriesAdapter('mov
 
 const manifest = {
   id: 'org.frenchstreamfull.addon',
-  version: '1.0.0',
+  version: '1.0.1',
   name: 'French-Stream-Full',
   description: 'Films, series, animes FR — French-Stream + French-Manga via hub FStream.',
+  logo: 'https://french-stream-full.onrender.com/logo.png',
+  background: 'https://french-stream-full.onrender.com/logo.png',
   resources: ['catalog', 'meta', 'stream'],
   types: ['movie', 'series'],
   catalogs: [
@@ -102,6 +104,6 @@ builder.defineStreamHandler(async (args) => {
 });
 
 const PORT = process.env.PORT || 7000;
-serveHTTP(builder.getInterface(), { port: PORT });
+serveHTTP(builder.getInterface(), { port: PORT, static: './public' });
 console.log(`\nFrench-Stream-Full : http://127.0.0.1:${PORT}/manifest.json`);
 console.log(`Sites actifs : ${Object.keys(adapters).join(', ') || 'AUCUN (verifie config/sites.json)'}\n`);
