@@ -11,7 +11,7 @@ function contentId(site, url) {
 
 function indexResult(site, item, type) {
   const id = contentId(site, item.url);
-  store.upsertContent({ id, title: item.title, altTitles: item.altTitles || [], year: item.year, type: type || item.type || 'movie', synopsis: item.synopsis, poster: item.poster });
+  store.upsertContent({ id, title: item.title, altTitles: item.altTitles || [], year: item.year, type: type || item.type || 'movie', synopsis: item.synopsis, poster: item.poster, background: item.background, genres: item.genres });
   store.upsertPage({ url: item.url, site, contentId: id, season: item.season ?? null, episode: item.episode ?? null, status: 200 });
   if (item.episodes && item.episodes.length) {
     for (const ep of item.episodes.slice(0, 200)) {

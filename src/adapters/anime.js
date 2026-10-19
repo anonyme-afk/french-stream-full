@@ -28,6 +28,18 @@ class AnimeAdapter extends DleAdapter {
     const title = decode((h.match(/<h1[^>]*>([\s\S]{1,200}?)<\/h1>/i) || [])[1]?.replace(/<[^>]+>/g, '') || '')
       || meta(h, 'og:title') || decode((h.match(/<title>([\s\S]{1,150}?)<\/title>/i) || [])[1] || '').split(/[-|–]/)[0].trim();
     const poster = meta(h, 'og:image') || (h.match(/<img[^>]+src="([^"]+)"[^>]*class="[^"]*poster/i) || [])[1] || null;
+    const backdrop = (h.match(/hero-backdrop[^>]*url\(['"]?(https?:[^'")]+)/i) || [])[1]
+      || (h.match(/background-image:[^;]*url\(['"]?(https?:[^'")]+)/i) || [])[1]
+      || null;
+    const genres = [];
+    {
+      const gm = h.match(/class="genres"[^>]*>([\s\S]{1,800}?)<\/(?:span|div)>/i);
+      if (gm) {
+        for (const x of [...gm[1].matchAll(/>([^<>]{2,30})</g)].map(y => decode(y[1]).trim()).filter(Boolean)) {
+          if (x.length > 1 && genres.length < 5) genres.push(x);
+        }
+      }
+    }
     const desc = decode((h.match(/<div[^>]+id="s-desc"[^>]*>([\s\S]{1,3000}?)<\/div>/i) || h.match(/<meta[^>]+name="description"[^>]+content="([^"]+)"/i) || [])[1]?.replace(/<[^>]+>/g, '').slice(0, 1500) || '');
     const yearM = h.match(/\b((?:19|20)\d{2})\b/);
     // Titres alternatifs via API (si newsId)
@@ -59,7 +71,7 @@ class AnimeAdapter extends DleAdapter {
         }
       }
     }
-    return { title, altTitles: [...new Set(altTitles)].slice(0, 10), year: yearM ? +yearM[1] : null, type: episodes.length ? 'series' : 'movie', synopsis: desc, poster: poster ? this.abs(poster) : null, episodes, sources, newsId };
+    return { title, altTitles: [...new Set(altTitles)].slice(0, 10), year: yearM ? +yearM[1] : null, type: episodes.length ? 'series' : 'movie', synopsis: desc, poster: poster ? this.abs(poster) : null, background: backdrop ? this.abs(backdrop) : null, genres, episodes, sources, newsId };
   }
 
   // Sources pour un episode precis (utilise par streams.js)

@@ -23,7 +23,7 @@ function upsertContent(c) {
   store.contents[c.id] = {
     id: c.id, title: c.title, title_norm: norm(c.title),
     altTitles: c.altTitles || [], year: c.year || null, type: c.type,
-    synopsis: c.synopsis || null, poster: c.poster || null,
+    synopsis: c.synopsis || null, poster: c.poster || null, background: c.background || null,
     genres: c.genres || [], lang: c.lang || 'fr', updatedAt: Date.now()
   };
   save();

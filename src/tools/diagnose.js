@@ -5,7 +5,7 @@ const { loadSites } = require('../config');
 const store = require('../store');
 const { AnimeAdapter } = require('../adapters/anime');
 const { MovieSeriesAdapter } = require('../adapters/movies');
-const { probeStream } = require('../http');
+const { probeStream } = require('../probe');
 const { score } = require('../utils/normalize');
 
 const args = Object.fromEntries(process.argv.slice(2).map((a) => {

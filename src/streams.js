@@ -1,12 +1,19 @@
 'use strict';
-// Gestionnaire de flux Stremio NATIF :
-// 1. Tous les liens utilisent `url` (JAMAIS `externalUrl`) pour lancer directement dans le lecteur Stremio.
-// 2. Dechiffrage des flux HLS direct (.m3u8) pour uqload, fsvid, vidzy.
-// 3. Endpoint proxy interne `/play` pour rediriger proprement (HTTP 307) les autres flux vers la ressource video.
+// Gestionnaire de flux Stremio NATIF — v2 ULTRA :
+// 1. Résolution PARALLÈLE de tous les flux (Promise.allSettled)
+// 2. Validation HEAD + filtrage des dummy streams (< 500KB / non-vidéo)
+// 3. Tous les liens utilisent `url` (JAMAIS `externalUrl`) — lecture directe dans Stremio
+// 4. Déchiffrage HLS direct (.m3u8) pour uqload, fsvid, vidzy
+// 5. Cache intelligent avec TTL configurable
+
 const store = require('./store');
-const { fetchText, probeStream } = require('./http');
+const { fetchText } = require('./http');
+const { probeStream } = require('./probe');
 const log = require('./logger');
 
+// ──────────────────────────────────────────────
+//  Unpacker p,a,c,k,e,d
+// ──────────────────────────────────────────────
 function unpack(packed) {
   try {
     const fn = new Function('return ' + packed.replace('eval(', '('));
@@ -16,6 +23,9 @@ function unpack(packed) {
   }
 }
 
+// ──────────────────────────────────────────────
+//  Decoders pour chaque lecteur
+// ──────────────────────────────────────────────
 function decodeFsvid(html, hostname) {
   try {
     const m = html.match(/eval\(function\(p,a,c,k,e,d\)[\s\S]+?\.split\('\|'\)\)\)/);
@@ -62,35 +72,67 @@ function decodeUqload(html) {
   }
 }
 
+// Extraction alternative : regex directe sur les sources vidéo classiques dans le HTML
+function extractDirectVideoUrl(html) {
+  // source src="..."  ou  file:"..." ou player.src("...")
+  const patterns = [
+    /source\s+src=["']([^"']+\.(?:m3u8|mp4)[^"']*)/i,
+    /file\s*:\s*["']([^"']+\.(?:m3u8|mp4)[^"']*)/i,
+    /player\.src\(\s*["']([^"']+\.(?:m3u8|mp4)[^"']*)/i,
+    /src\s*=\s*["'](https?:\/\/[^"']+\.(?:m3u8|mp4)[^"']*)/i,
+    /(https?:\/\/[^\s"'<>]+\.m3u8[^\s"'<>]*)/i,
+  ];
+  for (const p of patterns) {
+    const m = html.match(p);
+    if (m && m[1] && /^https?:/.test(m[1])) return m[1];
+  }
+  return null;
+}
+
 async function resolveDirectStream(url) {
   try {
+    const referer = /french-manga|vidzy/i.test(url) ? 'https://w16.french-manga.net/' : 'https://fs26.lol/';
+    const opts = { headers: { Referer: referer }, timeout: 4500, retries: 0 };
+
     if (/uqload\./i.test(url)) {
-      const r = await fetchText(url, { headers: { Referer: 'https://fs26.lol/' } });
+      const r = await fetchText(url, opts);
       if (r.ok && r.text) {
-        const u = decodeUqload(r.text);
-        if (u) return { url: u, streamType: 'hls' };
+        const u = decodeUqload(r.text) || extractDirectVideoUrl(r.text);
+        if (u) return { url: u, streamType: u.includes('.m3u8') ? 'hls' : 'mp4' };
       }
     }
+
     if (/fsvid\./i.test(url)) {
-      const r = await fetchText(url, { headers: { Referer: 'https://fs26.lol/' } });
+      const r = await fetchText(url, opts);
       if (r.ok && r.text) {
-        const u = decodeFsvid(r.text, 'fsvid.lol');
-        if (u) return { url: u, streamType: 'hls' };
+        const u = decodeFsvid(r.text, 'fsvid.lol') || extractDirectVideoUrl(r.text);
+        if (u) return { url: u, streamType: u.includes('.m3u8') ? 'hls' : 'mp4' };
       }
     }
+
     if (/vidzy\./i.test(url)) {
-      const r = await fetchText(url, { headers: { Referer: 'https://w16.french-manga.net/' } });
+      const r = await fetchText(url, opts);
       if (r.ok && r.text) {
-        const u = decodeFsvid(r.text, 'vidzy.cc') || decodeFsvid(r.text, 'vidzy.org');
-        if (u) return { url: u, streamType: 'hls' };
-        const m = r.text.match(/https?:\/\/[^\s"'<>]+\.(?:m3u8|mp4)[^\s"'<>]*/i);
-        if (m) return { url: m[0], streamType: m[0].includes('.m3u8') ? 'hls' : 'mp4' };
+        const u = decodeFsvid(r.text, 'vidzy.cc') || decodeFsvid(r.text, 'vidzy.org') || extractDirectVideoUrl(r.text);
+        if (u) return { url: u, streamType: u.includes('.m3u8') ? 'hls' : 'mp4' };
+      }
+    }
+
+    // Generic : si on n'a pas de decoder spécifique, on tente l'extraction directe
+    if (/voe\.|dood\.|streamtape\.|filemoon\.|vidoza\.|netu\./i.test(url)) {
+      const r = await fetchText(url, opts);
+      if (r.ok && r.text) {
+        const u = extractDirectVideoUrl(r.text);
+        if (u) return { url: u, streamType: u.includes('.m3u8') ? 'hls' : 'mp4' };
       }
     }
   } catch {}
   return null;
 }
 
+// ──────────────────────────────────────────────
+//  Cache helper
+// ──────────────────────────────────────────────
 function cacheFresh(entry, maxAgeMin = 10) {
   if (!entry || !entry.verifiedAt) return null;
   const ageMin = (Date.now() - entry.verifiedAt) / 60000;
@@ -100,12 +142,24 @@ function cacheFresh(entry, maxAgeMin = 10) {
 
 const PUBLIC_BASE = process.env.BASE_URL || 'https://french-stream-full.onrender.com';
 
+// ──────────────────────────────────────────────
+//  Build streams — PARALLEL + filtered
+// ──────────────────────────────────────────────
 async function buildStreams(pages, want, ctx) {
   const { adapters, SITES } = ctx;
   const streams = [];
-  for (const p of pages.slice(0, 1)) {
+  const cacheMinutes = SITES.settings.cacheStreamMinutes ?? 10;
+  const refererFor = (site) => site === 'anime' ? 'https://w16.french-manga.net/' : 'https://fs26.lol/';
+
+  // Deadline globale : jamais plus de ~12s pour tout le handler stream
+  const deadline = Date.now() + 12000;
+  const timeLeft = () => deadline - Date.now();
+
+  // Process up to 3 pages (not just 1 anymore)
+  for (const p of pages.slice(0, 3)) {
+    if (timeLeft() < 2500) break;
     try {
-      const cached = cacheFresh(store.getCache(p.url), SITES.settings.cacheStreamMinutes ?? 10);
+      const cached = cacheFresh(store.getCache(p.url), cacheMinutes);
       if (cached && !cached.stale && cached.items) {
         for (const it of cached.items) streams.push(it);
         continue;
@@ -133,33 +187,44 @@ async function buildStreams(pages, want, ctx) {
         list = list.filter((s) => !seen.has(s.url) && seen.add(s.url));
       }
 
-      const items = [];
-      for (const s of list.slice(0, 8)) {
+      // ─── RESOLUTION PARALLELE (max 8 sources, deadline respectee) ───
+      const ref = refererFor(p.site);
+      const resolvePromises = list.slice(0, 8).map(async (s) => {
         const langStr = (s.lang ? s.lang.toUpperCase() : 'FR');
         const hostName = (s.host || p.site || 'Source').toUpperCase();
         const epTag = s.episode != null ? ` Ep ${s.episode}` : '';
 
-        // Tente la resolution directe du flux HLS / MP4
-        const direct = await resolveDirectStream(s.url);
-        if (direct && direct.url) {
-          items.push({
-            name: `FSF [${langStr}]`,
-            title: `${title}${epTag}\n${hostName} • ${s.quality || 'HD'} (Direct)`,
-            url: direct.url,
-            behaviorHints: { notWebReady: false }
-          });
-        } else {
-          // Utilise notre endpoint de lecture Stremio natif /play (HTTP 307 Redirect vers video)
-          // Ne JAMAIS utiliser externalUrl pour que la video reste dans Stremio !
-          const playUrl = `${PUBLIC_BASE}/play?source=${encodeURIComponent(s.url)}`;
-          items.push({
-            name: `FSF [${langStr}]`,
-            title: `${title}${epTag}\n${hostName} • ${s.quality || 'HD'}`,
-            url: playUrl,
-            behaviorHints: { notWebReady: false }
-          });
+        try {
+          const direct = await resolveDirectStream(s.url);
+          if (direct && direct.url) {
+            const probe = await probeStream(direct.url, ref);
+            if (probe.isTooSmall) {
+              log.warn(p.site, 'stream-filter', `Filtre dummy: ${direct.url} (${probe.reason || ''})`);
+              return null;
+            }
+            if (!probe.compatible) return null;
+            return {
+              name: `FSF [${langStr}]`,
+              title: `${title}${epTag}\n${hostName} • ${s.quality || 'HD'} (Direct)`,
+              url: probe.variantUrl || direct.url,
+              behaviorHints: { notWebReady: false }
+            };
+          }
+        } catch (e) {
+          log.warn(p.site, 'resolve', `Fail ${s.url}: ${String(e).slice(0, 100)}`);
+        }
+
+        return null;
+      });
+
+      const results = await Promise.allSettled(resolvePromises);
+      const items = [];
+      for (const r of results) {
+        if (r.status === 'fulfilled' && r.value) {
+          items.push(r.value);
         }
       }
+
       store.setCache(p.url, { ok: items.length > 0, items });
       for (const it of items) streams.push(it);
     } catch (e) {

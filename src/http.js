@@ -1,18 +1,51 @@
 'use strict';
-// Client HTTP robuste : timeout, retry, redirections bornees, anti-boucle, concurrence.
+// Client HTTP v3 ULTRA : timeouts courts, concurrence, cookies persistants, probe avance.
 const log = require('./logger');
 
-const inflight = new Set();
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+let active = 0;
+const MAX_CONCURRENT = 8;
+const queue = [];
+function acquireSlot() {
+  if (active < MAX_CONCURRENT) { active++; return Promise.resolve(); }
+  return new Promise(resolve => queue.push(resolve));
+}
+function releaseSlot() {
+  active--;
+  if (queue.length) { active++; queue.shift()(); }
+}
+
+const cookieJar = new Map();
+function jarGet(host) { return cookieJar.get(host) || ''; }
+function jarSet(host, setCookies) {
+  if (!setCookies) return;
+  const arr = Array.isArray(setCookies) ? setCookies : [setCookies];
+  let cur = cookieJar.get(host) || '';
+  for (const sc of arr) {
+    const kv = String(sc).split(';')[0].trim();
+    if (!kv || !kv.includes('=')) continue;
+    const name = kv.split('=')[0];
+    const parts = cur.split(';').map(s => s.trim()).filter(Boolean).filter(s => !s.startsWith(name + '='));
+    parts.push(kv);
+    cur = parts.join('; ') + '; ';
+  }
+  cookieJar.set(host, cur);
+}
+function hostOf(url) { try { return new URL(url).hostname; } catch { return ''; } }
+
 async function fetchText(url, opts = {}) {
-  const timeout = opts.timeout || 15000;
-  const retries = opts.retries ?? 2;
+  const timeout = opts.timeout || 7000;
+  const retries = opts.retries ?? 1;
   let lastErr = null;
   for (let attempt = 0; attempt <= retries; attempt++) {
+    await acquireSlot();
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), timeout);
     try {
+      const host = hostOf(url);
+      const jar = jarGet(host);
+      const baseCookie = 'fsschal=k7x2m9q4v3b8; dle_skin=FrenchStream;';
       const res = await fetch(url, {
         signal: ctrl.signal,
         redirect: 'follow',
@@ -20,47 +53,50 @@ async function fetchText(url, opts = {}) {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36',
           'Accept-Language': 'fr-FR,fr;q=0.9',
           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'Cookie': 'fsschal=k7x2m9q4v3b8; dle_skin=FrenchStream;',
+          'Cookie': [baseCookie, jar, (opts.headers && opts.headers.Cookie) || ''].filter(Boolean).join(' '),
           ...(opts.headers || {})
         }
       });
       clearTimeout(t);
+      try {
+        const sc = res.headers.getSetCookie ? res.headers.getSetCookie() : res.headers.get('set-cookie');
+        if (sc) jarSet(host, sc);
+      } catch {}
       const text = await res.text().catch(() => '');
+      releaseSlot();
       return { status: res.status, url: res.url, text, headers: res.headers, ok: res.ok };
     } catch (e) {
       clearTimeout(t);
+      releaseSlot();
       lastErr = e;
-      log.warn(opts.site || '-', 'http', `Echec ${url} (tentative ${attempt + 1}/${retries + 1})`, { err: String(e).slice(0, 200) });
-      if (attempt < retries) await sleep(800 * (attempt + 1));
+      if (attempt < retries) await sleep(400 * (attempt + 1));
     }
   }
   throw lastErr;
 }
 
-async function headCheck(url, timeout = 10000) {
+async function headCheck(url, timeout, referer) {
   try {
     const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), timeout);
-    const res = await fetch(url, { method: 'HEAD', signal: ctrl.signal, redirect: 'follow' });
+    const t = setTimeout(() => ctrl.abort(), timeout || 4000);
+    const res = await fetch(url, {
+      method: 'HEAD', signal: ctrl.signal, redirect: 'follow',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36',
+        Referer: referer || 'https://fs26.lol/'
+      }
+    });
     clearTimeout(t);
-    return { ok: res.ok, status: res.status, contentType: res.headers.get('content-type'), finalUrl: res.url };
+    const cl = res.headers.get('content-length');
+    return {
+      ok: res.ok, status: res.status,
+      contentType: res.headers.get('content-type'),
+      contentLength: cl ? parseInt(cl, 10) : null,
+      finalUrl: res.url
+    };
   } catch (e) {
-    return { ok: false, status: 0, contentType: null, finalUrl: url, error: String(e).slice(0, 200) };
+    return { ok: false, status: 0, contentType: null, contentLength: null, finalUrl: url, error: String(e).slice(0, 200) };
   }
 }
 
-// HEAD leger -> GET partiel si doute. Ne telecharge jamais tout le flux.
-async function probeStream(url) {
-  const h = await headCheck(url);
-  const ct = (h.contentType || '').toLowerCase();
-  const u = (h.finalUrl || url).toLowerCase();
-  let streamType = null;
-  if (ct.includes('mpegurl') || u.includes('.m3u8')) streamType = 'hls';
-  else if (ct.includes('dash') || u.includes('.mpd')) streamType = 'dash';
-  else if (ct.includes('video/mp4') || ct.includes('video/') || u.endsWith('.mp4')) streamType = 'mp4';
-  else if (u.includes('.m3u8')) streamType = 'hls';
-  else if (u.includes('.mpd')) streamType = 'dash';
-  return { ...h, streamType, compatible: !!streamType && h.ok !== false };
-}
-
-module.exports = { fetchText, headCheck, probeStream };
+module.exports = { fetchText, headCheck, sleep };

@@ -14,6 +14,32 @@ function meta(h, prop) {
   return m ? decode(m[1]) : null;
 }
 
+function pickPoster(h) {
+  return meta(h, 'og:image')
+    || (h.match(/data-affiche2="(https?:[^"]+)"/i) || [])[1]
+    || (h.match(/data-affiche="(https?:[^"]+)"/i) || [])[1]
+    || (h.match(/<img[^>]+class="[^"]*(?:poster|affiche)[^"]*"[^>]+src="([^"]+)"/i) || [])[1]
+    || (h.match(/<img[^>]+src="([^"]+)"[^>]+class="[^"]*(?:poster|affiche)[^"]*"/i) || [])[1]
+    || null;
+}
+
+function pickBackdrop(h) {
+  return (h.match(/data-affiche2="(https?:[^"]+)"/i) || [])[1]
+    || (h.match(/hero-backdrop[^>]*url\(['"]?(https?:[^'")]+)/i) || [])[1]
+    || (h.match(/background-image:[^;]*url\(['"]?(https?:[^'")]+)/i) || [])[1]
+    || null;
+}
+
+function pickGenres(h) {
+  const out = [];
+  const m = h.match(/class="genres"[^>]*>([\s\S]{1,800}?)<\/(?:span|div)>/i);
+  if (m) {
+    const links = [...m[1].matchAll(/>([^<>]{2,30})</g)].map(x => decode(x[1]).trim()).filter(Boolean);
+    for (const g of links) if (g.length > 1 && out.length < 5) out.push(g);
+  }
+  return out;
+}
+
 class MovieSeriesAdapter extends DleAdapter {
   constructor(siteKey, siteCfg) {
     super(siteKey, siteCfg, null);
@@ -49,7 +75,9 @@ class MovieSeriesAdapter extends DleAdapter {
     const newsId = (filmM && filmM[1]) || (serieM && serieM[1]) || this.newsId(pageUrl);
     const title = decode((h.match(/<h1[^>]*id="s-title"[^>]*>([\s\S]{1,200}?)<\/h1>/i) || h.match(/<h1[^>]*>([\s\S]{1,200}?)<\/h1>/i) || [])[1]?.replace(/<[^>]+>/g, '') || '')
       || (filmM && decode(filmM[2])) || meta(h, 'og:title') || '';
-    const poster = meta(h, 'og:image') || (filmM && this.abs(h.match(/data-affiche="([^"]+)"/i)?.[1])) || null;
+    const poster = pickPoster(h) || null;
+    const backdrop = pickBackdrop(h) || null;
+    const genres = pickGenres(h);
     const desc = decode((h.match(/<div[^>]+id="s-desc"[^>]*>([\s\S]{1,3000}?)<\/div>/i) || h.match(/<meta[^>]+name="description"[^>]+content="([^"]+)"/i) || [])[1]?.replace(/<[^>]+>/g, '').slice(0, 1500) || '');
     const yearM = h.match(/date-de-sortie[^>]*>(\d{4})</) || h.match(/\b((?:19|20)\d{2})\b/);
     const langM = h.match(/id="film_lang"[^>]*>[\s\S]{0,200}?>([^<]{2,20})</i);
@@ -73,7 +101,7 @@ class MovieSeriesAdapter extends DleAdapter {
           }
         }
       }
-      return { title, altTitles: [], year: yearM ? +yearM[1] : null, type: 'series', synopsis: desc, poster: poster ? this.abs(poster) : null, episodes, sources, newsId };
+      return { title, altTitles: [], year: yearM ? +yearM[1] : null, type: 'series', synopsis: desc, poster: poster ? this.abs(poster) : null, background: backdrop ? this.abs(backdrop) : null, genres, episodes, sources, newsId };
     }
     // FILM : interrogation API film_api.php?id={newsId}
     if (newsId) {
@@ -113,7 +141,7 @@ class MovieSeriesAdapter extends DleAdapter {
         sources.push({ label: `Film • ${host}`, url: u, quality: 'HD', lang, episode: null, version: lang, host });
       }
     });
-    return { title, altTitles: [], year: yearM ? +yearM[1] : null, type: 'movie', synopsis: desc, poster: poster ? this.abs(poster) : null, episodes, sources, newsId };
+    return { title, altTitles: [], year: yearM ? +yearM[1] : null, type: 'movie', synopsis: desc, poster: poster ? this.abs(poster) : null, background: backdrop ? this.abs(backdrop) : null, genres, episodes, sources, newsId };
   }
 
   async sourcesForEpisode(pageUrl, episode, version) {

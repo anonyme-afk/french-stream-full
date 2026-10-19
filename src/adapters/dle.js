@@ -1,7 +1,7 @@
 'use strict';
-// Base DLE calibree : recherche via /engine/ajax/search.php (POST query+page),
+// Base DLE optimisée : recherche rapide via /engine/ajax/search.php (POST query+page),
 // extraction .search-item > onclick location.href + .search-title + img.
-// Zero dependance : fetch natif + regex.
+// Timeout réduit + cookie tracking auto + gestion anti-bot.
 const { fetchText } = require('../http');
 const log = require('../logger');
 
@@ -26,7 +26,7 @@ class DleAdapter {
     this.siteKey = siteKey;
     this.cfg = siteCfg;
     this.baseUrl = (siteCfg.baseUrl || '').replace(/\/+$/, '');
-    this.episodesApi = episodesApi; // ex: '/engine/ajax/manga_episodes_api.php?id='
+    this.episodesApi = episodesApi;
   }
   get enabled() { return !!(this.cfg.enabled && this.baseUrl && !/EXEMPLE/i.test(this.baseUrl)); }
 
@@ -38,7 +38,7 @@ class DleAdapter {
   async ajaxSearch(query, retry = true) {
     const url = this.baseUrl + '/engine/ajax/search.php';
     const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 20000);
+    const t = setTimeout(() => ctrl.abort(), 10000); // 10s max (was 20s)
     try {
       const res = await fetch(url, {
         method: 'POST', signal: ctrl.signal, redirect: 'follow',
@@ -63,6 +63,7 @@ class DleAdapter {
 
   parseSearchItems(html) {
     const out = [];
+    // Pattern principal
     const re = /<div class='search-item' onclick="location\.href='([^']+)'"[^>]*>[\s\S]{0,600}?<img src='([^']+)'[^>]*alt='([^']*)'[\s\S]{0,600}?<div class='search-title'>([^<]+)<\/div>/gi;
     let m;
     while ((m = re.exec(html)) !== null) {
@@ -71,13 +72,24 @@ class DleAdapter {
       const ym = title.match(/\((19|20)\d{2}\)\s*$/);
       const year = ym ? +ym[0].replace(/[()]/g, '') : null;
       if (ym) title = title.replace(/\s*\((19|20)\d{2}\)\s*$/, '').trim();
-      if (href && title) out.push({ title: title.slice(0, 150), url: href, poster: this.abs(m[2]), year, type: 'series' });
+      const poster = this.abs(m[2]);
+      if (href && title) out.push({ title: title.slice(0, 150), url: href, poster, year, type: 'series' });
+    }
+    // Pattern alternatif si pas de résultat
+    if (!out.length) {
+      const re2 = /location\.href\s*=\s*'([^']+)'[\s\S]{0,400}?(?:search-title|title)[^>]*>([^<]+)</gi;
+      let m2;
+      while ((m2 = re2.exec(html)) !== null) {
+        const href = this.abs(m2[1]);
+        const title = decode(m2[2]).trim();
+        if (href && title && title.length > 1) out.push({ title: title.slice(0, 150), url: href, poster: null, year: null, type: 'series' });
+      }
     }
     return out;
   }
 
   async search(query) {
-    log.info(this.siteKey, 'search', this.baseUrl + '/engine/ajax/search.php?q=' + query);
+    log.info(this.siteKey, 'search', `Searching "${query}" on ${this.baseUrl}`);
     const r = await this.ajaxSearch(query);
     if (!r.ok) throw new Error('HTTP ' + r.status + ' recherche ' + this.siteKey);
     const items = this.parseSearchItems(r.text);
@@ -93,14 +105,14 @@ class DleAdapter {
   async episodesMap(newsId, pageUrl) {
     if (!this.episodesApi) return null;
     const url = this.baseUrl + this.episodesApi + encodeURIComponent(newsId);
-    const r = await fetchText(url, { site: this.siteKey, headers: { 'X-Requested-With': 'XMLHttpRequest', Referer: pageUrl } });
+    const r = await fetchText(url, { site: this.siteKey, timeout: 6000, retries: 0, headers: { 'X-Requested-With': 'XMLHttpRequest', Referer: pageUrl } });
     if (!r.ok) return null;
     try { return JSON.parse(r.text); } catch { return null; }
   }
 
   hostsPriority() {
-    // Ordre prefere : lecteurs directs connus. fsvid = premium maison, vidzy/uqload = standards.
-    return ['premium', 'fsvid', 'vidzy', 'uqload', 'netu', 'voe', 'luluvid'];
+    // Ordre préféré : lecteurs directs connus
+    return ['premium', 'fsvid', 'vidzy', 'uqload', 'netu', 'voe', 'filemoon', 'dood', 'luluvid'];
   }
 
   pickHosts(epEntry) {
