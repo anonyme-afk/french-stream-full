@@ -1,183 +1,384 @@
-#!/usr/bin/env node
 'use strict';
 
-// ──────────────────────────────────────────────
-//  STREAMLINE PROXY — Stremio Add-on
-// ──────────────────────────────────────────────
+// ═════════════════════════════════════════════════════════════════════════════
+// French Stream Full Proxy — v2.1.0 (fusion catalogue + proxy réseau)
+// ═════════════════════════════════════════════════════════════════════════════
 
-const express = require('express');
-
+const { addonBuilder, serveHTTP } = require('stremio-addon-sdk');
 const { resolveDirectStream } = require('./src/streams.js');
-const { AnimeAdapter } = require('./src/adapters/anime.js');
-const { MovieSeriesAdapter } = require('./src/adapters/movies.js');
+const MovieSeriesAdapter = require('./src/adapters/movies.js');
+const AnimeAdapter = require('./src/adapters/anime.js');
+const store = require('./src/store');
+const { indexResult, searchIndex, pagesForContent } = require('./src/indexer');
+const { loadSites } = require('./src/config');
+const { fetchText } = require('./src/http');
+const { score, isMatch } = require('./src/utils/normalize');
+const log = require('./src/logger');
 
-// ──────────────────────────────────────────────
-//  Cache à court terme (10 minutes)
-// ──────────────────────────────────────────────
-const CACHE_TTL_MS = 10 * 60 * 1000;
-const cache = new Map();
+// ══════════════════════════════════════════════════════════════════════════════
+// CACHE EN MÉMOIRE VIVE (optimisation Render)
+// ══════════════════════════════════════════════════════════════════════════════
 
-function getCachedResolution(contentId) {
-  const entry = cache.get(contentId);
-  if (!entry) return null;
-  if (Date.now() > entry.expiry) {
-    cache.delete(contentId);
-    return null;
-  }
-  return entry;
+const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const resolutionCache = new Map();
+
+function getCachedResolution(id) {
+  const entry = resolutionCache.get(id);
+  if (entry && Date.now() - entry.ts < CACHE_TTL_MS) return entry.data;
+  resolutionCache.delete(id);
+  return null;
 }
 
-function setCachedResolution(contentId, data) {
-  cache.set(contentId, {
-    ...data,
-    expiry: Date.now() + CACHE_TTL_MS
-  });
+function setCachedResolution(id, data) {
+  resolutionCache.set(id, { data, ts: Date.now() });
 }
 
-// ──────────────────────────────────────────────
-//  Résolveur de métadonnées de contenu
-// ──────────────────────────────────────────────
-async function resolveContentMetadata(contentId) {
-  if (!contentId || typeof contentId !== 'string') {
-    throw new Error('contentId manquant ou invalide');
-  }
+// ══════════════════════════════════════════════════════════════════════════════
+// ADAPTERS & SITES
+// ══════════════════════════════════════════════════════════════════════════════
 
-  const isSeries = contentId.includes(':');
-  let imdbId;
-  let season = null;
-  let episode = null;
+const SITES = loadSites();
+const adapters = {};
+if (SITES.animeSite && SITES.animeSite.enabled) adapters.anime = new AnimeAdapter('anime', SITES.animeSite);
+if (SITES.movieSeriesSite && SITES.movieSeriesSite.enabled) adapters.movies = new MovieSeriesAdapter('movies', SITES.movieSeriesSite);
 
-  if (isSeries) {
-    const parts = contentId.split(':');
-    imdbId = parts[0];
-    season = parts[1] ? parseInt(parts[1], 10) : null;
-    episode = parts[2] ? parseInt(parts[2], 10) : null;
-  } else {
-    imdbId = contentId;
-  }
+// ══════════════════════════════════════════════════════════════════════════════
+// CACHE IMDB ID → nom (évite les re-requêtes Cinemeta)
+// ══════════════════════════════════════════════════════════════════════════════
 
-  let manifestUrl = null;
+const imdbNameCache = new Map();
+const IMDB_CACHE_TTL = 3600_000; // 1 heure
 
-  if (contentId.startsWith('anime_') || !contentId.startsWith('tt')) {
-    const ad = new AnimeAdapter('anime', {
-      baseUrl: 'https://w16.french-manga.net',
-      siteKey: 'anime',
-      episodesApi: '/engine/ajax/manga_episodes_api.php?id='
-    });
-    const pageUrl = 'https://w16.french-manga.net/' + contentId + '.html';
-    const page = await ad.extractContent(pageUrl);
-    const sources = page && page.sources ? page.sources : null;
-    manifestUrl = sources && sources.length ? sources[0].url : null;
-  } else {
-    const ad = new MovieSeriesAdapter('movies', {
-      baseUrl: 'https://fs26.lol',
-      siteKey: 'movies'
-    });
-    const targetPageUrl = 'https://fs26.lol/' + imdbId + '.html';
-    if (isSeries) {
-      const detail = await ad.sourcesForEpisode(targetPageUrl, episode);
-      const sources = detail && detail.sources ? detail.sources : null;
-      manifestUrl = sources && sources.length ? sources[0].url : null;
-    } else {
-      const detail = await ad.extractContent(targetPageUrl);
-      const sources = detail && detail.sources ? detail.sources : null;
-      manifestUrl = sources && sources.length ? sources[0].url : null;
+async function getImdbName(imdbId, type) {
+  const key = `${imdbId}:${type}`;
+  const cached = imdbNameCache.get(key);
+  if (cached && Date.now() - cached.ts < IMDB_CACHE_TTL) return cached;
+  try {
+    const res = await fetchText(`https://v3-cinemeta.strem.io/meta/${type}/${imdbId}.json`, { timeout: 5000, retries: 0 });
+    if (res.ok) {
+      const d = JSON.parse(res.text);
+      if (d && d.meta) {
+        const entry = { name: d.meta.name, meta: d.meta, ts: Date.now() };
+        imdbNameCache.set(key, entry);
+        return entry;
+      }
     }
-  }
+  } catch {}
+  return null;
+}
+// ══════════════════════════════════════════════════════════════════════════════
+// HELPERS (recopiés de addon.js)
+// ══════════════════════════════════════════════════════════════════════════════
 
-  if (!manifestUrl) {
-    throw new Error('Aucune URL de streaming valide trouvée');
-  }
-
-  const finalManifestUrl = await resolveDirectStream(manifestUrl);
-
-  const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-  const cookies = '';
-
+function toMeta(row) {
   return {
-    contentId,
-    imdbId,
-    season,
-    episode,
-    manifestUrl: finalManifestUrl,
-    userAgent,
-    cookies
+    id: row.id,
+    type: row.type,
+    name: row.title,
+    poster: row.poster || undefined,
+    posterShape: 'poster',
+    background: row.background || undefined,
+    description: row.synopsis || undefined,
+    releaseInfo: row.year ? String(row.year) : undefined,
+    genres: row.genres && row.genres.length ? row.genres : undefined
   };
 }
 
-// ──────────────────────────────────────────────
-//  Express + CORS
-// ──────────────────────────────────────────────
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', '*');
-  next();
-});
-
-// ──────────────────────────────────────────────
-//  Manifest Stremio
-// ──────────────────────────────────────────────
-app.get('/manifest.json', (req, res) => {
-  res.json({
-    id: 'org.myaddon.proxyresolver',
-    version: '1.0.0',
-    name: 'Stream Proxy',
-    description: 'Proxy de résolution de flux média pour Stremio',
-    resources: ['stream'],
-    types: ['movie', 'series', 'anime'],
-    idPrefixes: ['tt', 'anime_'],
-    catalogs: []
+async function searchAll(query, type) {
+  const found = new Map();
+  for (const r of searchIndex(query, type)) found.set(r.id, { row: r, score: r._score });
+  const adapterEntries = Object.entries(adapters).filter(([key]) => !(type === 'movie' && key === 'anime'));
+  const promises = adapterEntries.map(async ([key, ad]) => {
+    try {
+      const live = await ad.search(query);
+      const results = [];
+      for (const item of live) {
+        const s = score(query, item.title, { candYear: item.year });
+        if (!isMatch(query, item.title, { candYear: item.year })) continue;
+        const assignedType = type === 'movie' ? 'movie' : (item.title.match(/film/i) ? 'movie' : 'series');
+        const id = indexResult(key, { ...item, type: assignedType }, type);
+        const row = store.getContent(id);
+        results.push({ id, row, score: s });
+      }
+      return results;
+    } catch (e) {
+      log.error(key, 'search', String(e).slice(0, 300), { query });
+      return [];
+    }
   });
+  const allResults = await Promise.allSettled(promises);
+  for (const r of allResults) {
+    if (r.status === 'fulfilled') {
+      for (const item of r.value) {
+        if (!found.has(item.id)) found.set(item.id, { row: item.row, score: item.score });
+      }
+    }
+  }
+  return [...found.values()].sort((a, b) => b.score - a.score).slice(0, 30);
+}
+
+let seedingStarted = false;
+async function seedCatalog() {
+  if (seedingStarted) return;
+  seedingStarted = true;
+  const popular = [
+    { q: 'Gladiator', t: 'movie' }, { q: 'Dune', t: 'movie' }, { q: 'Inception', t: 'movie' },
+    { q: 'Avengers', t: 'movie' }, { q: 'Oppenheimer', t: 'movie' }, { q: 'Interstellar', t: 'movie' },
+    { q: 'Naruto', t: 'series' }, { q: 'One Piece', t: 'series' }, { q: 'Breaking Bad', t: 'series' },
+    { q: 'Game of Thrones', t: 'series' }, { q: 'Stranger Things', t: 'series' }, { q: 'Attack on Titan', t: 'series' }
+  ];
+  for (const { q, t } of popular) {
+    try { await searchAll(q, t); } catch {}
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// MANIFESTE OFFICIEL (fusion)
+// ══════════════════════════════════════════════════════════════════════════════
+
+const builder = new addonBuilder({
+  id: 'org.myaddon.proxyresolver',
+  version: '2.1.0',
+  name: 'French Stream Full Proxy',
+  description: 'Films, séries, animes VF/VOSTFR avec proxy d\'en-têtes réseau stabilisé.',
+  resources: ['catalog', 'meta', 'stream'],
+  types: ['movie', 'series', 'anime'],
+  idPrefixes: ['tt', 'anime_'],
+  catalogs: [
+    { type: 'movie', id: 'fs_movies', name: 'French Stream - Films' },
+    { type: 'series', id: 'fs_series', name: 'French Stream - Séries' },
+    { type: 'anime', id: 'fs_anime', name: 'French Manga - Animes' }
+  ]
+});
+// ══════════════════════════════════════════════════════════════════════════════
+// CATALOG HANDLER (recopié à l'identique de addon.js)
+// ══════════════════════════════════════════════════════════════════════════════
+
+builder.defineCatalogHandler(async (args) => {
+  const q = (args.extra && args.extra.search) || '';
+  if (!q) {
+    const list = store.contentsByType(args.type);
+    if (list.length === 0) {
+      seedCatalog().catch(() => {});
+      const seedQuery = args.type === 'movie' ? 'Gladiator' : 'Naruto';
+      const initial = await searchAll(seedQuery, args.type);
+      return { metas: initial.map((r) => toMeta(r.row)) };
+    }
+    return { metas: list.map(toMeta) };
+  }
+  const res = await searchAll(q, args.type);
+  return { metas: res.map((r) => toMeta(r.row)) };
 });
 
-// ──────────────────────────────────────────────
-//  Route /stream (appelée par Stremio)
-// ──────────────────────────────────────────────
-app.get('/stream', async (req, res) => {
-  const contentId = req.query.id || null;
+// ══════════════════════════════════════════════════════════════════════════════
+// META HANDLER (recopié à l'identique de addon.js, enrichi Cinemeta)
+// ══════════════════════════════════════════════════════════════════════════════
 
-  if (!contentId) {
-    return res.status(400).json({ error: 'Paramètre id requis' });
+builder.defineMetaHandler(async (args) => {
+  // Cas Cinemeta (tt...)
+  if (String(args.id).startsWith('tt')) {
+    const entry = await getImdbName(args.id, args.type);
+    if (entry && entry.meta) return { meta: entry.meta };
+    return { meta: null };
   }
 
-  try {
-    let metadata = getCachedResolution(contentId);
+  const row = store.getContent(args.id);
+  if (!row) return { meta: null };
+  const meta = toMeta(row);
+  const pages = pagesForContent(args.id);
+  let eps = store.episodesFor(args.id);
 
-    if (!metadata) {
-      metadata = await resolveContentMetadata(contentId);
-      setCachedResolution(contentId, metadata);
+  // Si c'est une serie et qu'aucun episode n'est en cache, on extrait la fiche maintenant
+  if (meta.type === 'series' && (!eps || !eps.length) && pages.length) {
+    const page = pages[0];
+    const ad = adapters[page.site];
+    if (ad) {
+      try {
+        const detail = await ad.extractContent(page.url);
+        if (detail && detail.episodes && detail.episodes.length) {
+          for (const ep of detail.episodes) {
+            store.upsertPage({
+              url: `${page.url}#ep=${ep.episode}&v=${(ep.version || 'vf').toLowerCase()}`,
+              site: page.site,
+              contentId: args.id,
+              season: ep.season || 1,
+              episode: ep.episode,
+              episodeTitle: ep.title,
+              status: 200
+            });
+          }
+          eps = store.episodesFor(args.id);
+        }
+        // Enrich metadata from detail
+        if (detail.poster && !row.poster) {
+          store.upsertContent({ ...row, poster: detail.poster });
+        }
+        if (detail.synopsis && !row.synopsis) {
+          store.upsertContent({ ...row, synopsis: detail.synopsis });
+        }
+      } catch (err) {
+        log.error(page.site, 'meta-extract', String(err).slice(0, 300));
+      }
+    }
+  }
+
+  if (eps && eps.length) {
+    const seen = new Set();
+    meta.videos = [];
+    for (const e of eps) {
+      const key = `${e.season}x${e.episode}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      meta.videos.push({
+        id: `${args.id}:S${e.season}E${e.episode}`,
+        title: e.title || `Episode ${e.episode}`,
+        season: e.season,
+        episode: e.episode
+      });
+    }
+  }
+  return { meta };
+});
+// ══════════════════════════════════════════════════════════════════════════════
+// STREAM HANDLER (logique dynamique corrigée avec proxy réseau)
+// ══════════════════════════════════════════════════════════════════════════════
+
+builder.defineStreamHandler(async (args) => {
+  const id = String(args.id);
+
+  // Vérifier le cache de résolution
+  const cached = getCachedResolution(id);
+  if (cached) return cached;
+
+  let streams = [];
+
+  if (id.includes(':')) {
+    const parts = id.split(':');
+    const imdbId = parts[0];
+    const season = parseInt(parts[1], 10) || 1;
+    const episode = parseInt(parts[2], 10) || null;
+
+    // Choisir l'adapter selon le préfixe de l'ID
+    let Adapter;
+    let siteKey;
+    if (id.startsWith('anime_')) {
+      Adapter = AnimeAdapter;
+      siteKey = 'anime';
+    } else if (id.startsWith('tt')) {
+      Adapter = MovieSeriesAdapter;
+      siteKey = 'movies';
     }
 
-    const streamTitle = '🎬 Flux HD - ' + metadata.imdbId + (metadata.season ? ' S' + metadata.season + 'E' + metadata.episode : '');
+    if (Adapter && SITES) {
+      const siteCfg = siteKey === 'anime' ? SITES.animeSite : SITES.movieSeriesSite;
+      if (siteCfg) {
+        const ad = new Adapter(siteKey, siteCfg);
 
-    const streams = [
-      {
-        title: streamTitle,
-        url: metadata.manifestUrl,
-        behaviorHints: {
-          notWebReady: true,
-          proxyHeaders: {
-            request: {
-              'User-Agent': metadata.userAgent,
-              ...(metadata.cookies ? { 'Cookie': metadata.cookies } : {})
+        // Récupérer les pages associées à ce contenu via le store
+        const pages = pagesForContent(id);
+
+        if (pages.length) {
+          // Résolution parallèle des sources via resolveDirectStream (proxy réseau)
+          const refererFor = (site) => site === 'anime' ? 'https://w16.french-manga.net/' : 'https://fs26.lol/';
+          const ref = refererFor(siteKey);
+
+          const resolvePromises = pages.slice(0, 3).map(async (page) => {
+            try {
+              const detail = await ad.extractContent(page.url);
+              const sources = detail.sources || [];
+
+              // Filtrer par épisode si pertinent
+              let relevant = sources;
+              if (episode != null) {
+                relevant = sources.filter((s) => s.episode === episode);
+              }
+
+              // Prendre jusqu'à 4 sources par page
+              for (const s of relevant.slice(0, 4)) {
+                try {
+                  const direct = await resolveDirectStream(s.url);
+                  if (direct && direct.url) {
+                    streams.push({
+                      name: `FSF [${(s.lang || 'fr').toUpperCase()}]`,
+                      title: `${detail.title || id} ${s.episode != null ? `Ep ${s.episode}` : ''}\n${(s.host || siteKey).toUpperCase()} • ${s.quality || 'HD'} (Direct)`,
+                      url: direct.url,
+                      behaviorHints: { notWebReady: true }
+                    });
+                  }
+                } catch (e) {
+                  log.warn(siteKey, 'resolve-stream', `Fail ${s.url}: ${String(e).slice(0, 100)}`);
+                }
+              }
+            } catch (e) {
+              log.error(siteKey, 'extract-content', String(e).slice(0, 200), { page: page.url });
             }
+          });
+
+          await Promise.allSettled(resolvePromises);
+        }
+
+        // Fallback : si aucune page en cache, tenter une recherche live par nom IMDB
+        if (!streams.length && imdbId && imdbId.startsWith('tt')) {
+          try {
+            const entry = await getImdbName(imdbId, args.type || 'movie');
+            if (entry && entry.name) {
+              const searchRes = await searchAll(entry.name, args.type || 'movie');
+              for (const sr of searchRes.slice(0, 2)) {
+                const pgs = pagesForContent(sr.row.id);
+                if (pgs.length) {
+                  const page = pgs[0];
+                  const ad2 = adapters[page.site];
+                  if (ad2) {
+                    const detail = await ad2.extractContent(page.url);
+                    const sources = detail.sources || [];
+                    for (const s of sources.slice(0, 4)) {
+                      try {
+                        const direct = await resolveDirectStream(s.url);
+                        if (direct && direct.url) {
+                          streams.push({
+                            name: `FSF [${(s.lang || 'fr').toUpperCase()}]`,
+                            title: `${detail.title || sr.row.title}\n${(s.host || page.site).toUpperCase()} • ${s.quality || 'HD'} (Direct)`,
+                            url: direct.url,
+                            behaviorHints: { notWebReady: true }
+                          });
+                        }
+                      } catch {}
+                    }
+                  }
+                }
+                if (streams.length) break;
+              }
+            }
+          } catch (e) {
+            log.error('cinemeta', 'stream-fallback', String(e).slice(0, 200), { id });
           }
         }
       }
-    ];
-
-    res.json({ streams });
-  } catch (err) {
-    res.status(500).json({ error: 'Résolution du flux échouée', detail: err.message });
+    }
   }
+
+  const result = {
+    streams,
+    behaviorHints: { notWebReady: true },
+    proxyHeaders: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
+      'Accept': '*/*',
+      'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.8'
+    }
+  };
+
+  setCachedResolution(id, result);
+  return result;
 });
 
-// ──────────────────────────────────────────────
-//  Démarrage du serveur
-// ──────────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log('Serveur Proxy Stremio : http://127.0.0.1:' + PORT);
-});
+// ══════════════════════════════════════════════════════════════════════════════
+// DÉMARRAGE DU SERVEUR (SDK Stremio)
+// ══════════════════════════════════════════════════════════════════════════════
+
+serveHTTP(builder.getInterface(), { port: process.env.PORT || 3000 });
+
+console.log(`\n════════════════════════════════════════════════════════════════════════════════`);
+console.log(`  French Stream Full Proxy v2.1.0`);
+console.log(`  Manifest : http://127.0.0.1:${process.env.PORT || 3000}/manifest.json`);
+console.log(`  Port     : ${process.env.PORT || 3000}`);
+console.log(`════════════════════════════════════════════════════════════════════════════════\n`);
