@@ -2,3 +2,9 @@ node_modules/
 data/fsf.json
 data/*.log
 .env
+
+# Fichiers temporaires et scripts de debug (à ne pas tracker)
+fix.ps1
+tmp_fix.ps1
+tmp_lines.txt
+*.ps1
