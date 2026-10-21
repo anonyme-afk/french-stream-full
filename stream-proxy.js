@@ -6,8 +6,8 @@
 
 const { addonBuilder, serveHTTP } = require('stremio-addon-sdk');
 const { resolveDirectStream } = require('./src/streams.js');
-const MovieSeriesAdapter = require('./src/adapters/movies.js');
-const AnimeAdapter = require('./src/adapters/anime.js');
+const { MovieSeriesAdapter } = require('./src/adapters/movies.js');
+const { AnimeAdapter } = require('./src/adapters/anime.js');
 const store = require('./src/store');
 const { indexResult, searchIndex, pagesForContent } = require('./src/indexer');
 const { loadSites } = require('./src/config');
