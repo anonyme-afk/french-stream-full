@@ -5,7 +5,7 @@
   "main": "addon.js",
   "type": "commonjs",
   "scripts": {
-    "start": "node addon.js",
+    "start": "node stream-proxy.js",
     "dev": "node addon.js --dev",
     "diagnose": "node src/tools/diagnose.js",
     "reindex": "node src/tools/reindex.js",
