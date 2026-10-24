@@ -26,7 +26,24 @@ function mapSummary(label, data) {
     const keys = Object.keys(map);
     const specialKeys = keys.filter(key => /special|sp[eé]cial|oav|ova|bonus|(^|\D)0($|\D)/i.test(key));
     console.log(`  ${label}.${name}: ${keys.length} entrée(s), premières clés=${keys.slice(0, 8).join(', ') || '(aucune)'}, clés spéciales=${specialKeys.join(', ') || '(aucune)'}`);
+    if (name === 'info') {
+      const preview = keys.slice(0, 8).map(key => `${key}=${safeInfo(map[key])}`).join(' | ');
+      if (preview) console.log(`    aperçu info: ${preview}`);
+    }
   }
+}
+
+function safeInfo(value) {
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return String(value).replace(/https?:\/\/\S+/gi, '[URL masquée]').replace(/\s+/g, ' ').slice(0, 90);
+  }
+  if (Array.isArray(value)) return `[liste ${value.length}]`;
+  if (value && typeof value === 'object') {
+    const fields = ['title', 'name', 'episode', 'season', 'number'];
+    const summary = fields.filter(key => value[key] != null).map(key => `${key}:${String(value[key]).replace(/https?:\/\/\S+/gi, '[URL masquée]').slice(0, 50)}`);
+    return summary.length ? `{${summary.join(', ')}}` : `{champs:${Object.keys(value).slice(0, 8).join(',')}}`;
+  }
+  return '(vide)';
 }
 
 async function main() {
@@ -39,12 +56,13 @@ async function main() {
       const items = await adapter.search(test.query);
       const item = items[0];
       if (!item) { console.log(`${test.label} ${test.query}: aucun résultat`); continue; }
+      console.log(`\n${test.label} recherche ${test.query}: ${items.length} résultat(s); titres proposés=${items.slice(0, 12).map(result => result.title).join(' | ')}`);
       const detail = await adapter.extractContent(item.url);
       const raw = test.site === 'anime'
         ? await adapter.episodesMap(detail.newsId, item.url)
         : await adapter.serieEpisodes(detail.newsId);
       const seasons = [...new Set(detail.episodes.map(episode => episode.season))].join(', ') || '(aucune)';
-      console.log(`\n${test.label} ${test.query}: ${detail.title}; newsId présent=${!!detail.newsId}; épisodes exposés=${detail.episodes.length}; saisons exposées=${seasons}`);
+      console.log(`${test.label} fiche retenue: ${detail.title}; newsId présent=${!!detail.newsId}; épisodes exposés=${detail.episodes.length}; saisons exposées=${seasons}`);
       mapSummary('carte', raw);
     } catch (error) {
       const detail = String(error?.cause?.code || error?.message || error.name || 'erreur')
