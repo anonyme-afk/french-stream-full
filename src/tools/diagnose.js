@@ -76,6 +76,11 @@ const args = Object.fromEntries(process.argv.slice(2).map((a) => {
     assert.deepEqual(episodeCoordinatesFromKey('OVA 2', 1), { season: 0, episode: 2 });
     assert.deepEqual(episodeCoordinatesFromKey('4', 2), { season: 2, episode: 4 });
     assert.equal(episodeLabel(0, 2, 'vf'), 'Spécial 2 (VF)');
+    const { episodePagesForItem } = require('../indexer');
+    const manyEpisodes = Array.from({ length: 250 }, (_, index) => ({ season: 1, episode: index + 1, version: 'vf' }));
+    const indexedEpisodePages = episodePagesForItem({ url: 'https://site.test/series', episodes: manyEpisodes }, 'anime', 'fsf:anime:test');
+    assert.equal(indexedEpisodePages.length, 250);
+    assert.equal(indexedEpisodePages[249].episode, 250);
     assert.deepEqual(filterEpisodeSources([
       { season: 0, episode: 1, url: 'special' },
       { season: 1, episode: 1, url: 'regular' }

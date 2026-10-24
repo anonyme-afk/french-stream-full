@@ -9,15 +9,20 @@ function contentId(site, url) {
   return `fsf:${site}:${h}`;
 }
 
+function episodePagesForItem(item, site, id) {
+  return (Array.isArray(item.episodes) ? item.episodes : []).map(ep => ({
+      url: `${item.url}#s=${ep.season ?? 1}&ep=${ep.episode}&v=${(ep.version || 'vf').toLowerCase()}`,
+      site, contentId: id, season: ep.season, episode: ep.episode, episodeTitle: ep.title, status: 200
+  }));
+}
+
 function indexResult(site, item, type) {
   const id = contentId(site, item.url);
   store.upsertContent({ id, title: item.title, altTitles: item.altTitles || [], year: item.year, type: type || item.type || 'movie', synopsis: item.synopsis, poster: item.poster, background: item.background, genres: item.genres });
   store.upsertPage({ url: item.url, site, contentId: id, season: item.season ?? null, episode: item.episode ?? null, status: 200 });
-  if (item.episodes && item.episodes.length) {
-    store.upsertPages(item.episodes.slice(0, 200).map(ep => ({
-      url: `${item.url}#s=${ep.season ?? 1}&ep=${ep.episode}&v=${(ep.version || 'vf').toLowerCase()}`,
-      site, contentId: id, season: ep.season, episode: ep.episode, episodeTitle: ep.title, status: 200
-    })));
+  const episodePages = episodePagesForItem(item, site, id);
+  if (episodePages.length) {
+    store.upsertPages(episodePages);
   }
   return id;
 }
@@ -40,4 +45,4 @@ function pagesForContent(contentId) {
   return Object.values(store.store.pages).filter((p) => p.contentId === contentId);
 }
 
-module.exports = { indexResult, searchIndex, pagesForContent };
+module.exports = { indexResult, searchIndex, pagesForContent, episodePagesForItem };

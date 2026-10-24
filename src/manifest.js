@@ -1,7 +1,7 @@
 'use strict';
 
 const ADDON_ID = 'org.frenchstreamfull.addon';
-const ADDON_VERSION = '2.4.5';
+const ADDON_VERSION = '2.4.6';
 const ADDON_NAME = 'French-Stream-Full';
 
 function createManifest(baseUrl = 'https://french-stream-full.onrender.com') {
