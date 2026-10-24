@@ -320,7 +320,15 @@ app.get('/play', async (req, res) => {
 app.get('/health', (req, res) => {
   const contents = store.allContents().length;
   const adaptersActive = Object.keys(adapters);
-  res.json({ status: 'ok', version: manifest.version, contents, adapters: adaptersActive, movieSeriesDomain: getDiscoveryStatus() });
+  res.json({
+    status: 'ok',
+    version: manifest.version,
+    gitCommit: process.env.RENDER_GIT_COMMIT || null,
+    gitBranch: process.env.RENDER_GIT_BRANCH || null,
+    contents,
+    adapters: adaptersActive,
+    movieSeriesDomain: getDiscoveryStatus()
+  });
 });
 
 // Routeur officiel SDK Stremio

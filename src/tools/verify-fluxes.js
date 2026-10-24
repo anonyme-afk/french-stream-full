@@ -46,6 +46,13 @@ async function checkRender() {
   } catch (error) {
     report(`  inaccessible (${error.name || 'erreur réseau'})`);
   }
+  try {
+    const health = await renderJSON('/health');
+    const body = health.body || {};
+    report(`Render health : HTTP ${health.status}, version=${body.version || '(absente)'}, commit=${body.gitCommit || '(non exposé)'}, branche=${body.gitBranch || '(non exposée)'}`);
+  } catch (error) {
+    report(`Render health : inaccessible (${error.name || 'erreur réseau'})`);
+  }
 }
 
 async function renderJSON(path) {

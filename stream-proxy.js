@@ -311,6 +311,8 @@ app.get('/health', async (req, res) => {
   res.json({
     status: 'ok',
     version: manifest.version,
+    gitCommit: process.env.RENDER_GIT_COMMIT || null,
+    gitBranch: process.env.RENDER_GIT_BRANCH || null,
     adapters: Object.keys(adapters),
     movieSeriesDomain: { ...getDiscoveryStatus(), ok: discovery.ok }
   });
