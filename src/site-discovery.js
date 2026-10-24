@@ -48,6 +48,18 @@ function findCurrentMovieSeriesUrl(html, referenceUrl) {
   return candidates.find((item) => new URL(item.url).hostname.toLowerCase() !== referenceHost)?.url || null;
 }
 
+function findRedirectedMovieSeriesUrl(finalUrl, referenceUrl) {
+  try {
+    const final = new URL(finalUrl);
+    const reference = new URL(referenceUrl);
+    if (!['http:', 'https:'].includes(final.protocol)) return null;
+    if (final.hostname.toLowerCase() === reference.hostname.toLowerCase()) return null;
+    return final.origin;
+  } catch {
+    return null;
+  }
+}
+
 function persistCache(next) {
   cache = next;
   try {
@@ -92,7 +104,8 @@ async function discoverMovieSeriesBase(sites, adapters) {
       const referenceUrl = cfg.discoveryUrl;
       const page = await fetchText(referenceUrl, { timeout: 8000, retries: 0 });
       if (!page.ok) throw new Error(`page relais HTTP ${page.status}`);
-      const candidate = findCurrentMovieSeriesUrl(page.text, referenceUrl);
+      const candidate = findRedirectedMovieSeriesUrl(page.url, referenceUrl)
+        || findCurrentMovieSeriesUrl(page.text, referenceUrl);
       if (!candidate) throw new Error('lien Films & Séries introuvable sur la page relais');
 
       // Vérifie que le domaine candidat répond avant de le propager aux adaptateurs.
@@ -142,4 +155,4 @@ function getDiscoveryStatus() {
   return { ...safe, host };
 }
 
-module.exports = { CACHE_PATH, CACHE_TTL_MS, findCurrentMovieSeriesUrl, discoverMovieSeriesBase, getDiscoveryStatus };
+module.exports = { CACHE_PATH, CACHE_TTL_MS, findCurrentMovieSeriesUrl, findRedirectedMovieSeriesUrl, discoverMovieSeriesBase, getDiscoveryStatus };

@@ -7,7 +7,7 @@ const { AnimeAdapter } = require('../adapters/anime');
 const { MovieSeriesAdapter } = require('../adapters/movies');
 const { probeStream } = require('../probe');
 const { score } = require('../utils/normalize');
-const { findCurrentMovieSeriesUrl, discoverMovieSeriesBase } = require('../site-discovery');
+    const { findCurrentMovieSeriesUrl, findRedirectedMovieSeriesUrl, discoverMovieSeriesBase } = require('../site-discovery');
 
 const args = Object.fromEntries(process.argv.slice(2).map((a) => {
   const m = a.replace(/^--/, '').split('=');
@@ -92,6 +92,9 @@ const args = Object.fromEntries(process.argv.slice(2).map((a) => {
     ]).length, 1);
     assert.equal(extractDirectVideoUrl('{"file":"https:\\/\\/cdn.example.test\\/episode.m3u8?sig=abc"}'), 'https://cdn.example.test/episode.m3u8?sig=abc');
     assert.equal(findCurrentMovieSeriesUrl('<a href="https://ads.example.test">Publicité</a><a href="https://new.example.test/">Regarder en streaming</a>', 'https://relay.example.test/'), 'https://new.example.test');
+    assert.equal(findRedirectedMovieSeriesUrl('https://new.example.test/path', 'https://relay.example.test/'), 'https://new.example.test');
+    assert.equal(findRedirectedMovieSeriesUrl('https://relay.example.test/new', 'https://relay.example.test/'), null);
+    assert.equal(findRedirectedMovieSeriesUrl('javascript:alert(1)', 'https://relay.example.test/'), null);
     const { addonBuilder } = require('stremio-addon-sdk');
     const { ADDON_ID, ADDON_VERSION, createManifest } = require('../manifest');
     const manifest = createManifest('https://example.test/');
