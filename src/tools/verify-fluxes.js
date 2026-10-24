@@ -8,6 +8,7 @@ const { AnimeAdapter } = require('../adapters/anime');
 const { MovieSeriesAdapter } = require('../adapters/movies');
 const { buildStreams } = require('../streams');
 const { probeStream } = require('../probe');
+const { ADDON_ID, ADDON_VERSION } = require('../manifest');
 
 const SITES = loadSites();
 const RENDER_BASE = (process.env.BASE_URL || 'https://french-stream-full.onrender.com').replace(/\/+$/, '');
@@ -37,8 +38,8 @@ async function checkRender() {
     report(`  id=${manifest.id || '(absent)'} version=${manifest.version || '(absente)'}`);
     report(`  types=${(manifest.types || []).join(', ')}`);
     report(`  catalogues=${(manifest.catalogs || []).map(c => `${c.type}:${c.id}`).join(', ')}`);
-    if (manifest.id !== 'org.frenchstreamfull.addon') {
-      report('  ATTENTION : Render sert encore un ancien manifeste; Stremio n’utilise pas le code poussé récemment.');
+    if (manifest.id !== ADDON_ID || manifest.version !== ADDON_VERSION) {
+      report(`  ATTENTION : Render sert une autre version (attendue ${ADDON_ID} v${ADDON_VERSION}); redeploie le dernier commit.`);
     }
   } catch (error) {
     report(`  inaccessible (${error.name || 'erreur réseau'})`);

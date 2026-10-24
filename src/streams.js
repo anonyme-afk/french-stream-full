@@ -1,10 +1,9 @@
 'use strict';
-// Gestionnaire de flux Stremio NATIF — v2 ULTRA :
-// 1. Résolution PARALLÈLE de tous les flux (Promise.allSettled)
-// 2. Validation HEAD + filtrage des dummy streams (< 500KB / non-vidéo)
-// 3. Tous les liens utilisent `url` (JAMAIS `externalUrl`) — lecture directe dans Stremio
-// 4. Déchiffrage HLS direct (.m3u8) pour uqload, fsvid, vidzy
-// 5. Cache intelligent avec TTL configurable
+// Résolution et assemblage des flux Stremio :
+// 1. Résolution concurrente des sources retenues
+// 2. Contrôle des flux média et rejet des faux flux
+// 3. URL directe quand possible, externalUrl pour les lecteurs qui l'exigent
+// 4. Cache temporaire avec durée configurable
 
 const store = require('./store');
 const { fetchText } = require('./http');

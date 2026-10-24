@@ -44,6 +44,13 @@ const args = Object.fromEntries(process.argv.slice(2).map((a) => {
       { site: 'movies', url: 'https://site.test/show#ep=2&v=vostfr' }
     ]).length, 1);
     const { addonBuilder } = require('stremio-addon-sdk');
+    const { ADDON_ID, ADDON_VERSION, createManifest } = require('../manifest');
+    const manifest = createManifest('https://example.test/');
+    assert.equal(manifest.id, ADDON_ID);
+    assert.equal(manifest.version, ADDON_VERSION);
+    assert.equal(manifest.name, 'French-Stream-Full');
+    assert.deepEqual(manifest.catalogs.map(c => c.id), ['fsf-movies', 'fsf-series']);
+    assert.equal(manifest.logo, 'https://example.test/logo.png');
     const manifestBuilder = new addonBuilder({ id: 'test.addon', version: '1.0.0', name: 'test', description: 'test', resources: ['stream'], types: ['movie', 'series'], catalogs: [] });
     manifestBuilder.defineStreamHandler(() => ({ streams: [] }));
     assert.deepEqual(manifestBuilder.getInterface().manifest.types, ['movie', 'series']);

@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 'use strict';
 // ═══════════════════════════════════════════════════════════════
-// French-Stream-Full v2.0 — Stremio Add-on ULTRA
+// French-Stream-Full v2.2.0 — add-on Stremio
 // ═══════════════════════════════════════════════════════════════
 // • Recherche parallèle (adapters simultanés)
 // • Cache Cinemeta IMDB → titre (évite les re-requêtes)
 // • Metadata enrichie (poster, description, genres, année)
-// • Streams directs uniquement (jamais externalUrl, jamais /play embed)
-// • Filtrage des dummy streams (< 500KB)
+// • Flux directs quand disponibles, lien externe conservé en solution de repli
+// • Filtrage des faux flux et délais adaptés à Stremio
 // • Timeout Stremio-friendly (< 15s max par requête)
 // ═══════════════════════════════════════════════════════════════
 
@@ -52,21 +52,8 @@ async function getImdbName(imdbId, type) {
   return null;
 }
 
-const manifest = {
-  id: 'org.frenchstreamfull.addon',
-  version: '2.0.1',
-  name: 'French-Stream-Full',
-  description: 'Films, séries, animes VF / VOSTFR — French-Stream + French-Manga.',
-  logo: 'https://french-stream-full.onrender.com/logo.png',
-  background: 'https://french-stream-full.onrender.com/logo.png',
-  resources: ['catalog', 'meta', 'stream'],
-  types: ['movie', 'series'],
-  catalogs: [
-    { type: 'movie', id: 'fsf-movies', name: 'FSF Films', extra: [{ name: 'search', isRequired: false }] },
-    { type: 'series', id: 'fsf-series', name: 'FSF Séries & Animes', extra: [{ name: 'search', isRequired: false }] }
-  ],
-  idPrefixes: ['fsf:', 'tt']
-};
+const { createManifest } = require('./src/manifest');
+const manifest = createManifest(process.env.BASE_URL || 'https://french-stream-full.onrender.com');
 
 const builder = new addonBuilder(manifest);
 

@@ -1,7 +1,7 @@
 'use strict';
 
 // ═════════════════════════════════════════════════════════════════════════════
-// French Stream Full Proxy — v2.1.0 (fusion catalogue + proxy réseau)
+// French Stream Full Proxy — manifeste centralisé, catalogue fusionné
 // ═════════════════════════════════════════════════════════════════════════════
 
 const { addonBuilder, getRouter } = require('stremio-addon-sdk');
@@ -17,6 +17,7 @@ const { loadSites } = require('./src/config');
 const { fetchText } = require('./src/http');
 const { score, isMatch } = require('./src/utils/normalize');
 const log = require('./src/logger');
+const { createManifest } = require('./src/manifest');
 
 // ══════════════════════════════════════════════════════════════════════════════
 // CACHE EN MÉMOIRE VIVE (optimisation Render)
@@ -139,21 +140,8 @@ async function seedCatalog() {
 // MANIFESTE OFFICIEL (fusion)
 // ══════════════════════════════════════════════════════════════════════════════
 
-const builder = new addonBuilder({
-  id: 'org.frenchstreamfull.addon',
-  version: '2.1.0',
-  name: 'French-Stream-Full',
-  description: 'Films, séries et animes VF/VOSTFR — French-Stream + French-Manga.',
-  logo: `${process.env.BASE_URL || 'https://french-stream-full.onrender.com'}/logo.png`,
-  background: `${process.env.BASE_URL || 'https://french-stream-full.onrender.com'}/logo.png`,
-  resources: ['catalog', 'meta', 'stream'],
-  types: ['movie', 'series'],
-  idPrefixes: ['fsf:', 'tt'],
-  catalogs: [
-    { type: 'movie', id: 'fsf-movies', name: 'FSF Films', extra: [{ name: 'search', isRequired: false }] },
-    { type: 'series', id: 'fsf-series', name: 'FSF Séries & Animes', extra: [{ name: 'search', isRequired: false }] }
-  ]
-});
+const manifest = createManifest(process.env.BASE_URL || 'https://french-stream-full.onrender.com');
+const builder = new addonBuilder(manifest);
 // ══════════════════════════════════════════════════════════════════════════════
 // CATALOG HANDLER (recopié à l'identique de addon.js)
 // ══════════════════════════════════════════════════════════════════════════════
@@ -323,7 +311,7 @@ app.get('/', (req, res) => {
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n════════════════════════════════════════════════════════════════════════════════`);
-  console.log(`  French Stream Full Proxy v2.1.0`);
+  console.log(`  ${manifest.name} v${manifest.version}`);
   console.log(`  Manifest : http://127.0.0.1:${PORT}/manifest.json`);
   console.log(`  Port     : ${PORT}`);
   console.log(`════════════════════════════════════════════════════════════════════════════════\n`);
