@@ -1,6 +1,6 @@
 {
   "name": "french-stream-full",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "French-Stream-Full — add-on Stremio modulaire pour films, séries et anime",
   "main": "addon.js",
   "type": "commonjs",

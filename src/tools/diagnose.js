@@ -16,7 +16,7 @@ const args = Object.fromEntries(process.argv.slice(2).map((a) => {
 (async () => {
   if (args.selftest) {
     const assert = require('node:assert/strict');
-    const { norm, isMatch, parseSeasonEpisode } = require('../utils/normalize');
+    const { norm, isMatch, parseSeasonEpisode, score, catalogScore } = require('../utils/normalize');
     console.log('norm =', norm("L'Attaque des Titans"));
     console.log('score naruto =', score('naruto', 'Naruto Shippuden Kai - Saison 1').toFixed(2));
     console.log('isMatch =', isMatch('naruto', 'Naruto Shippuden Kai - Saison 1'));
@@ -26,6 +26,10 @@ const args = Object.fromEntries(process.argv.slice(2).map((a) => {
     const dle = new DleAdapter('test', { baseUrl: 'https://x.test' });
     console.log('parse-search-items =', dle.parseSearchItems(sample).length + ' items (attendu: 1)');
     assert.equal(dle.parseSearchItems(sample).length, 1);
+    assert.equal(score('Breaking Bad', 'Breaking Bad - Saison 2'), 1);
+    assert.ok(score('The Boys', 'The Boys - Saison 4') > score('The Boys', 'The Boys in the Band'));
+    assert.ok(catalogScore('Death Note', 'Death Note - Saison 1', 'series') > catalogScore('Death Note', 'Death Note', 'series'));
+    assert.equal(isMatch('The Matrix', 'A Glitch in the Matrix'), false);
     const { streamCacheKey, parseContentVideoId, uniqueContentPages } = require('../streams');
     assert.notEqual(
       streamCacheKey('https://site.test/show#ep=1&v=vf', { season: 1, episode: 1 }),

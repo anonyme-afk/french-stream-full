@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 // ═══════════════════════════════════════════════════════════════
-// French-Stream-Full v2.2.0 — add-on Stremio
+// French-Stream-Full v2.3.0 — add-on Stremio
 // ═══════════════════════════════════════════════════════════════
 // • Recherche parallèle (adapters simultanés)
 // • Cache Cinemeta IMDB → titre (évite les re-requêtes)
@@ -20,7 +20,7 @@ const store = require('./src/store');
 const { indexResult, searchIndex, pagesForContent } = require('./src/indexer');
 const { AnimeAdapter } = require('./src/adapters/anime');
 const { MovieSeriesAdapter } = require('./src/adapters/movies');
-const { score, isMatch } = require('./src/utils/normalize');
+const { catalogScore, isMatch } = require('./src/utils/normalize');
 const { fetchText } = require('./src/http');
 const log = require('./src/logger');
 const { buildStreams, resolveDirectStream, parseContentVideoId } = require('./src/streams');
@@ -75,7 +75,7 @@ function toMeta(row) {
 async function searchAll(query, type) {
   const found = new Map();
   // 1. Index local (instant)
-  for (const r of searchIndex(query, type)) found.set(r.id, { row: r, score: r._score });
+  for (const r of searchIndex(query, type)) found.set(r.id, { row: r, score: catalogScore(query, r.title, type, { candYear: r.year }) });
 
   // 2. Adapters en PARALLÈLE
   const adapterEntries = Object.entries(adapters).filter(([key]) => !(type === 'movie' && key === 'anime'));
@@ -84,7 +84,7 @@ async function searchAll(query, type) {
       const live = await ad.search(query);
       const results = [];
       for (const item of live) {
-        const s = score(query, item.title, { candYear: item.year });
+        const s = catalogScore(query, item.title, type, { candYear: item.year });
         if (!isMatch(query, item.title, { candYear: item.year })) continue;
         const assignedType = type === 'movie' ? 'movie' : (item.title.match(/film/i) ? 'movie' : 'series');
         const id = indexResult(key, { ...item, type: assignedType }, type);

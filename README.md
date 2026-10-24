@@ -6,7 +6,7 @@ Add-on Stremio modulaire pour rechercher des films, des séries et des anime, av
 
 - Nom : `French-Stream-Full`
 - Identifiant stable Stremio : `org.frenchstreamfull.addon`
-- Version du manifeste et du projet : `2.2.0`
+- Version du manifeste et du projet : `2.3.0`
 - Types Stremio : `movie`, `series` (les anime sont publiés comme séries)
 - Catalogues : `fsf-movies` et `fsf-series`
 - Logo : `public/logo.png` et `public/logo.svg`

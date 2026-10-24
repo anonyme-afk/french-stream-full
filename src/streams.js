@@ -218,7 +218,7 @@ async function buildStreams(pages, want, ctx) {
       const resolvePromises = list.slice(0, 8).map(async (s) => {
         const langStr = (s.lang ? s.lang.toUpperCase() : 'FR');
         const hostName = (s.host || p.site || 'Source').toUpperCase();
-        const epTag = s.episode != null ? ` Ep ${s.episode}` : '';
+        const epTag = s.episode != null ? ` S${s.season || want.season || 1} Ep ${s.episode}` : '';
         const sourceReferer = /^https?:\/\//i.test(s.url) ? s.url : ref;
 
         try {

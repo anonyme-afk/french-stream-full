@@ -28,6 +28,8 @@ class AnimeAdapter extends DleAdapter {
     if (!newsId) newsId = this.newsId(pageUrl);
     const title = decode((h.match(/<h1[^>]*>([\s\S]{1,200}?)<\/h1>/i) || [])[1]?.replace(/<[^>]+>/g, '') || '')
       || meta(h, 'og:title') || decode((h.match(/<title>([\s\S]{1,150}?)<\/title>/i) || [])[1] || '').split(/[-|–]/)[0].trim();
+    const seasonMatch = title.match(/\b(?:saison|season)\s*(\d+)\b/i);
+    const seasonNumber = seasonMatch ? Number(seasonMatch[1]) : 1;
     const poster = meta(h, 'og:image') || (h.match(/<img[^>]+src="([^"]+)"[^>]*class="[^"]*poster/i) || [])[1] || null;
     const backdrop = (h.match(/hero-backdrop[^>]*url\(['"]?(https?:[^'")]+)/i) || [])[1]
       || (h.match(/background-image:[^;]*url\(['"]?(https?:[^'")]+)/i) || [])[1]
@@ -65,9 +67,9 @@ class AnimeAdapter extends DleAdapter {
         for (const [num, entry] of Object.entries(map)) {
           const ep = +num;
           if (!ep) continue;
-          episodes.push({ season: 1, episode: ep, title: `Episode ${ep} (${version.toUpperCase()})`, url: `${pageUrl}#ep=${ep}&v=${version}`, version, hosts: entry });
+          episodes.push({ season: seasonNumber, episode: ep, title: `Episode ${ep} (${version.toUpperCase()})`, url: `${pageUrl}#ep=${ep}&v=${version}`, version, hosts: entry });
           for (const { host, url } of this.pickHosts(entry)) {
-            sources.push({ label: `Ep ${ep} ${version.toUpperCase()} • ${host}`, url, quality: 'HD', lang: version === 'vf' ? 'fr' : 'vostfr', episode: ep, version, host });
+            sources.push({ label: `Ep ${ep} ${version.toUpperCase()} • ${host}`, url, quality: 'HD', lang: version === 'vf' ? 'fr' : 'vostfr', season: seasonNumber, episode: ep, version, host });
           }
         }
       }

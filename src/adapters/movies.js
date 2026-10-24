@@ -75,6 +75,8 @@ class MovieSeriesAdapter extends DleAdapter {
     const newsId = (filmM && filmM[1]) || (serieM && serieM[1]) || this.newsId(pageUrl);
     const title = decode((h.match(/<h1[^>]*id="s-title"[^>]*>([\s\S]{1,200}?)<\/h1>/i) || h.match(/<h1[^>]*>([\s\S]{1,200}?)<\/h1>/i) || [])[1]?.replace(/<[^>]+>/g, '') || '')
       || (filmM && decode(filmM[2])) || meta(h, 'og:title') || '';
+    const seasonMatch = title.match(/\b(?:saison|season)\s*(\d+)\b/i);
+    const seasonNumber = seasonMatch ? Number(seasonMatch[1]) : 1;
     const poster = pickPoster(h) || null;
     const backdrop = pickBackdrop(h) || null;
     const genres = pickGenres(h);
@@ -94,9 +96,9 @@ class MovieSeriesAdapter extends DleAdapter {
           for (const [num, entry] of Object.entries(map || {})) {
             const ep = +num;
             if (!ep) continue;
-            episodes.push({ season: 1, episode: ep, title: `Episode ${ep} (${version.toUpperCase()})`, url: `${pageUrl}#ep=${ep}&v=${version}`, version, hosts: entry });
+            episodes.push({ season: seasonNumber, episode: ep, title: `Episode ${ep} (${version.toUpperCase()})`, url: `${pageUrl}#ep=${ep}&v=${version}`, version, hosts: entry });
             for (const { host, url } of this.pickHosts(entry)) {
-              sources.push({ label: `Ep ${ep} ${version.toUpperCase()} • ${host}`, url, quality: 'HD', lang: version === 'vf' ? 'fr' : version, episode: ep, version, host });
+              sources.push({ label: `Ep ${ep} ${version.toUpperCase()} • ${host}`, url, quality: 'HD', lang: version === 'vf' ? 'fr' : version, season: seasonNumber, episode: ep, version, host });
             }
           }
         }

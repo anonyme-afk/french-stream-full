@@ -30,8 +30,14 @@ function score(query, candidate, opts = {}) {
   const q = norm(query), c = norm(candidate);
   if (!q || !c) return 0;
   if (q === c) return 1;
+  // Les pages de série portent souvent le suffixe "Saison N" :
+  // compare le titre de base avant de classer les variantes.
+  const candidateBase = c.replace(/\s+(?:saison|season)\s+\d+(?:\s+.*)?$/, '').trim();
+  if (candidateBase === q) return 1;
   let s = 0;
-  if (c.includes(q) || q.includes(c)) s = Math.max(s, 0.85);
+  if (c.startsWith(`${q} `)) s = Math.max(s, 0.82);
+  else if (c.includes(` ${q} `)) s = Math.max(s, 0.70);
+  if (q.startsWith(`${c} `)) s = Math.max(s, 0.68);
   s = Math.max(s, lev(q, c));
   // Bonus annee
   if (opts.queryYear && opts.candYear) {
@@ -46,6 +52,13 @@ function isMatch(query, candidate, opts = {}) {
   return score(query, candidate, opts) >= (opts.threshold ?? 0.72);
 }
 
+function catalogScore(query, candidate, type, opts = {}) {
+  const base = score(query, candidate, opts);
+  // À score de titre égal, une fiche saison est un meilleur candidat dans le
+  // catalogue des séries qu'un film portant le même titre.
+  return type === 'series' && /\b(?:saison|season)\s*\d+\b/i.test(candidate || '') ? base + 0.02 : base;
+}
+
 // Parse "Saison 2 Episode 5" / "S02E05" / "Episode 12" / numerotation absolue
 function parseSeasonEpisode(text) {
   const t = (text || '');
@@ -58,4 +71,4 @@ function parseSeasonEpisode(text) {
   return { season: 1, episode: null };
 }
 
-module.exports = { norm, lev, score, isMatch, parseSeasonEpisode };
+module.exports = { norm, lev, score, catalogScore, isMatch, parseSeasonEpisode };

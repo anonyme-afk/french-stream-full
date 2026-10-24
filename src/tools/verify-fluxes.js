@@ -9,6 +9,7 @@ const { MovieSeriesAdapter } = require('../adapters/movies');
 const { buildStreams } = require('../streams');
 const { probeStream } = require('../probe');
 const { ADDON_ID, ADDON_VERSION } = require('../manifest');
+const { score, isMatch } = require('../utils/normalize');
 
 const SITES = loadSites();
 const RENDER_BASE = (process.env.BASE_URL || 'https://french-stream-full.onrender.com').replace(/\/+$/, '');
@@ -55,7 +56,7 @@ async function renderJSON(path) {
 
 async function checkRenderStremioFlow({ label, type, catalogId, query, maxEpisodes = 1 }) {
   report(`\n--- CHAÎNE API RENDER / STREMIO : ${label} (« ${query} ») ---`);
-  const stats = { label, query, catalogMs: null, metaMs: null, streamMs: 0, catalogCount: 0, episodeCount: 0, streamCount: 0, directCount: 0, externalCount: 0, directProbeOk: 0, directProbeFail: 0, errors: 0 };
+  const stats = { label, query, catalogMs: null, metaMs: null, streamMs: 0, catalogCount: 0, episodeCount: 0, streamCount: 0, directCount: 0, externalCount: 0, directProbeOk: 0, directProbeFail: 0, titleMismatch: 0, typeMismatch: 0, errors: 0 };
   try {
     const catalog = await renderJSON(`/catalog/${type}/${catalogId}/search=${encodeURIComponent(query)}.json`);
     const metas = catalog.body?.metas || [];
@@ -65,7 +66,14 @@ async function checkRenderStremioFlow({ label, type, catalogId, query, maxEpisod
     if (catalog.status >= 400 || !metas.length) { stats.errors++; return stats; }
 
     const selected = metas[0];
-    report(`  Élément reçu : ${selected.name || '(sans titre)'} (${selected.type || type})`);
+    const selectedTitle = selected.name || '';
+    const titleScore = score(query, selectedTitle);
+    report(`  Élément reçu : ${selectedTitle || '(sans titre)'} (${selected.type || type}), correspondance titre ${titleScore.toFixed(2)}`);
+    if (!isMatch(query, selectedTitle)) {
+      stats.titleMismatch++;
+      stats.errors++;
+      report('  ERREUR : le premier résultat ne correspond pas suffisamment à la recherche.');
+    }
     const metaResult = await renderJSON(`/meta/${type}/${encodeURIComponent(selected.id)}.json`);
     const meta = metaResult.body?.meta;
     stats.metaMs = metaResult.elapsedMs;
@@ -74,6 +82,11 @@ async function checkRenderStremioFlow({ label, type, catalogId, query, maxEpisod
     if (metaResult.status >= 400 || !meta) { stats.errors++; return stats; }
 
     const actualType = meta.type || selected.type || type;
+    if (actualType !== type) {
+      stats.typeMismatch++;
+      stats.errors++;
+      report(`  ERREUR : le catalogue ${type} a renvoyé une fiche de type ${actualType}.`);
+    }
     const videos = meta.videos?.length ? meta.videos.slice(0, maxEpisodes) : [{ id: selected.id }];
     for (const video of videos) {
       const videoId = video.id;
@@ -216,7 +229,7 @@ async function checkTitle({ label, site, query, type, episode }) {
   }
   report('\n=== SYNTHÈSE 30 CAS ===');
   for (const [type, total] of Object.entries(totals)) {
-    report(`${type}: ${total.tested} test(s), ${total.results} résultat(s) catalogue Render, ${total.episodes} épisode(s), ${total.direct} flux directs / ${total.external} pages externes Render, médias accessibles ${total.probeOk}/${total.probeOk + total.probeFail}, ${total.localSources} source(s) trouvée(s) localement, ${total.localStreams} flux assemblé(s) localement, ${total.errors} erreur(s) Render`);
+    report(`${type}: ${total.tested} test(s), ${total.results} résultat(s) catalogue Render, ${total.episodes} épisode(s), ${total.direct} flux directs / ${total.external} pages externes Render, médias accessibles ${total.probeOk}/${total.probeOk + total.probeFail}, ${total.localSources} source(s) trouvée(s) localement, ${total.localStreams} flux assemblé(s) localement, ${total.errors} erreur(s) API/type/titre Render`);
   }
   if (customSeries) {
     await checkRenderStremioFlow({ label: 'série à diagnostiquer', type: 'series', catalogId: 'fsf-series', query: customSeries, maxEpisodes: 3 });

@@ -15,7 +15,7 @@ const store = require('./src/store');
 const { indexResult, searchIndex, pagesForContent } = require('./src/indexer');
 const { loadSites } = require('./src/config');
 const { fetchText } = require('./src/http');
-const { score, isMatch } = require('./src/utils/normalize');
+const { catalogScore, isMatch } = require('./src/utils/normalize');
 const log = require('./src/logger');
 const { createManifest } = require('./src/manifest');
 
@@ -90,14 +90,14 @@ function toMeta(row) {
 
 async function searchAll(query, type) {
   const found = new Map();
-  for (const r of searchIndex(query, type)) found.set(r.id, { row: r, score: r._score });
+  for (const r of searchIndex(query, type)) found.set(r.id, { row: r, score: catalogScore(query, r.title, type, { candYear: r.year }) });
   const adapterEntries = Object.entries(adapters).filter(([key]) => !(type === 'movie' && key === 'anime'));
   const promises = adapterEntries.map(async ([key, ad]) => {
     try {
       const live = await ad.search(query);
       const results = [];
       for (const item of live) {
-        const s = score(query, item.title, { candYear: item.year });
+        const s = catalogScore(query, item.title, type, { candYear: item.year });
         if (!isMatch(query, item.title, { candYear: item.year })) continue;
         const assignedType = type === 'movie' ? 'movie' : (item.title.match(/film/i) ? 'movie' : 'series');
         const id = indexResult(key, { ...item, type: assignedType }, type);
