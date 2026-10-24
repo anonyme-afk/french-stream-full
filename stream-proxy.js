@@ -16,6 +16,7 @@ const { indexResult, searchIndex, pagesForContent } = require('./src/indexer');
 const { loadSites } = require('./src/config');
 const { fetchText } = require('./src/http');
 const { catalogScore, isMatch } = require('./src/utils/normalize');
+const { discoverMovieSeriesBase, getDiscoveryStatus } = require('./src/site-discovery');
 const log = require('./src/logger');
 const { createManifest } = require('./src/manifest');
 
@@ -89,6 +90,7 @@ function toMeta(row) {
 }
 
 async function searchAll(query, type) {
+  await discoverMovieSeriesBase(SITES, adapters);
   const found = new Map();
   for (const r of searchIndex(query, type)) found.set(r.id, { row: r, score: catalogScore(query, r.title, type, { candYear: r.year }) });
   const adapterEntries = Object.entries(adapters).filter(([key]) => !(type === 'movie' && key === 'anime'));
@@ -167,6 +169,7 @@ builder.defineCatalogHandler(async (args) => {
 // ══════════════════════════════════════════════════════════════════════════════
 
 builder.defineMetaHandler(async (args) => {
+  await discoverMovieSeriesBase(SITES, adapters);
   // Cas Cinemeta (tt...)
   if (String(args.id).startsWith('tt')) {
     const entry = await getImdbName(args.id, args.type);
@@ -243,6 +246,7 @@ function streamResult(streams) {
 }
 
 builder.defineStreamHandler(async (args) => {
+  await discoverMovieSeriesBase(SITES, adapters);
   const cached = getCachedResolution(args.id);
   if (cached) return cached;
 
@@ -301,6 +305,17 @@ app.use((req, res, next) => {
   next();
 });
 app.use(express.static(publicDir, { maxAge: '1d' }));
+
+app.get('/health', async (req, res) => {
+  const discovery = await discoverMovieSeriesBase(SITES, adapters);
+  res.json({
+    status: 'ok',
+    version: manifest.version,
+    adapters: Object.keys(adapters),
+    movieSeriesDomain: { ...getDiscoveryStatus(), ok: discovery.ok }
+  });
+});
+
 app.use(getRouter(addonInterface));
 
 const landingHTML = landingTemplate(addonInterface.manifest);

@@ -100,8 +100,11 @@ function extractDirectVideoUrl(html) {
 
 async function resolveDirectStream(url, pageReferer) {
   try {
-    const referer = pageReferer || (/french-manga|vidzy/i.test(url) ? 'https://w16.french-manga.net/' : 'https://fs26.lol/');
-    const opts = { headers: { Referer: referer }, timeout: 4500, retries: 0 };
+    let referer = pageReferer || '';
+    if (!referer) {
+      try { referer = `${new URL(url).origin}/`; } catch {}
+    }
+    const opts = { headers: referer ? { Referer: referer } : {}, timeout: 4500, retries: 0 };
 
     if (/uqload\./i.test(url)) {
       const r = await fetchText(url, opts);
@@ -184,7 +187,10 @@ async function buildStreams(pages, want, ctx) {
   const { adapters, SITES } = ctx;
   const streams = [];
   const cacheMinutes = SITES.settings.cacheStreamMinutes ?? 10;
-  const refererFor = (site) => site === 'anime' ? 'https://w16.french-manga.net/' : 'https://fs26.lol/';
+  const refererFor = (site) => {
+    const cfg = SITES[site === 'anime' ? 'animeSite' : 'movieSeriesSite'];
+    return cfg?.baseUrl ? `${cfg.baseUrl.replace(/\/+$/, '')}/` : '';
+  };
   const uniquePages = uniqueContentPages(pages);
 
   // Deadline globale : jamais plus de ~12s pour tout le handler stream

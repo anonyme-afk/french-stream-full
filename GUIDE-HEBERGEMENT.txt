@@ -1,23 +1,29 @@
 HEBERGER FRENCH-STREAM-FULL SUR RENDER
 ======================================
 
-Version actuelle du projet : 2.3.1
+Version actuelle du projet : 2.4.0
 Identifiant Stremio stable : org.frenchstreamfull.addon
 Manifeste : https://french-stream-full.onrender.com/manifest.json
 
 DEPLOIEMENT EXISTANT
   1. Le dépôt GitHub est relie au service Render `french-stream-full`.
-  2. Pousse les changements sur la branche surveillee par Render (actuellement `main`).
-  3. Dans Render, lance un deploiement si le deploiement automatique est desactive.
-  4. Attends le statut `Live`, puis verifie `/manifest.json` et `/health`.
+  2. Dans Render, ouvre le service > Settings > verifie la branche `main`.
+  3. Dans Auto-Deploy, selectionne `On Commit`, puis sauvegarde les reglages.
+  4. Va dans Deploys et lance une fois `Deploy latest commit` pour publier le code deja pousse.
+  5. Pour les prochains changements, un push sur `main` doit lancer le deploiement automatiquement.
+  6. Attends le statut `Live`, puis verifie `/manifest.json` et `/health`.
   5. Le manifeste doit afficher le nom French-Stream-Full, l'identifiant ci-dessus,
-     la version 2.3.1 et les catalogues `fsf-movies` / `fsf-series`.
+     la version 2.4.0 et les catalogues `fsf-movies` / `fsf-series`.
 
 CONFIGURATION RENDER
   Le fichier `render.yaml` definit les commandes :
        Build : npm install
        Start : node stream-proxy.js
+       Branche : main
+       Auto-deploy : commit
   Render fournit la variable PORT. Le service ecoute sur toutes les interfaces.
+  Le domaine du site films/series est decouvert au lancement depuis la page relais;
+  sa derniere valeur valide est gardee en cache pour tolerer une panne temporaire.
 
 INSTALLATION DANS STREMIO
   Stremio > Addons > Installer via URL > coller l'adresse du manifeste ci-dessus.

@@ -3,5 +3,7 @@ services:
     name: french-stream-full
     env: node
     plan: free
+    branch: main
+    autoDeployTrigger: commit
     buildCommand: npm install
     startCommand: node stream-proxy.js

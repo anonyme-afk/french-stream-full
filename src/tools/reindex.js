@@ -6,6 +6,7 @@ const store = require('../store');
 const { indexResult } = require('../indexer');
 const { AnimeAdapter } = require('../adapters/anime');
 const { MovieSeriesAdapter } = require('../adapters/movies');
+const { discoverMovieSeriesBase } = require('../site-discovery');
 
 const args = Object.fromEntries(process.argv.slice(2).map((a) => {
   const m = a.replace(/^--/, '').split('=');
@@ -17,6 +18,10 @@ const args = Object.fromEntries(process.argv.slice(2).map((a) => {
   const jobs = [];
   if (!args.site || args.site === 'anime') jobs.push(['anime', new AnimeAdapter('anime', SITES.animeSite)]);
   if (!args.site || args.site === 'movies') jobs.push(['movies', new MovieSeriesAdapter('movies', SITES.movieSeriesSite)]);
+  const adapters = Object.fromEntries(jobs.map(([key, adapter]) => [key, adapter]));
+  const discovery = await discoverMovieSeriesBase(SITES, adapters);
+  if (discovery.baseUrl) console.log(`[movies] domaine actif obtenu via ${discovery.source}: ${new URL(discovery.baseUrl).host}`);
+  else console.log(`[movies] domaine indisponible: ${discovery.error || 'aucune adresse de secours'}`);
   const queries = args.query ? [args.query] : ['naruto', 'one piece', 'demon slayer', 'avengers', 'batman'];
   const limit = +(args.limit || 50);
   let n = 0;

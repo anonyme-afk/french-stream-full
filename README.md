@@ -12,12 +12,14 @@ Chaque partie a demandé un vrai travail de conception, de tests et de correctio
 
 - Nom : `French-Stream-Full`
 - Identifiant stable Stremio : `org.frenchstreamfull.addon`
-- Version du manifeste et du projet : `2.3.1` (2.3.0 avant)
+- Version du manifeste et du projet : `2.4.0` (2.3.1 avant)
 - Types Stremio : `movie`, `series` (les anime sont publiés comme séries)
 - Catalogues : `fsf-movies` et `fsf-series`
 - Logo : `public/logo.png` et `public/logo.svg`
 
 Le manifeste partagé se trouve dans `src/manifest.js` et sert aux deux points d’entrée (`addon.js` et `stream-proxy.js`). Les anime gardent le type Stremio `series` pour que l’application puisse sélectionner une saison et un épisode.
+
+Le domaine films/séries n’est pas figé dans `config/sites.json` : au premier accès, l’add-on suit le lien « Regarder en streaming » publié par la page relais configurée, vérifie que le domaine répond, puis le conserve comme dernière adresse valide avec une durée de cache courte. Si la découverte échoue, il réutilise cette dernière adresse. L’identifiant Stremio et l’adresse du manifeste restent stables ; un changement de domaine source ne demande donc pas de réinstaller l’add-on.
 
 ## Lancer en local
 
@@ -56,6 +58,6 @@ Ce contrôle vérifie localement les identifiants d’épisodes et la déduplica
 
 ## Déploiement Render
 
-Le dépôt contient `render.yaml`, configuré pour `npm install` puis `node stream-proxy.js`. Après un push sur la branche reliée à Render, vérifie les journaux de déploiement, puis ouvre `/manifest.json` et `/health`. Render peut mettre le service gratuit en veille après une période sans requête.
+Le dépôt contient `render.yaml`, configuré pour la branche `main`, le déclenchement `On Commit`, `npm install` puis `node stream-proxy.js`. Pour un service Render déjà créé, vérifie aussi dans **Settings** que la branche reliée est `main` et que **Auto-Deploy** est réglé sur **On Commit**. Après activation, déploie une fois le dernier commit déjà présent ; les pushes suivants partiront automatiquement. Vérifie les journaux, puis `/manifest.json` et `/health`. Render peut mettre le service gratuit en veille après une période sans requête.
 
 Pour les étapes de raccordement GitHub et Render, voir [GUIDE-HEBERGEMENT.txt](GUIDE-HEBERGEMENT.txt).

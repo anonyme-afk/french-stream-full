@@ -1,5 +1,8 @@
 node_modules/
 data/fsf.json
+data/resolved-sites.json
+data/resolved-sites.json.tmp
+data/verification-*.txt
 data/*.log
 .env
 

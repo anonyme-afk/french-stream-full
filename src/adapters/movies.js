@@ -1,9 +1,9 @@
 'use strict';
-// FILMS + SERIES : fs26.lol calibre sur donnees reelles.
+// FILMS + SERIES : domaine courant fourni par le résolveur de site.
 // - Recherche : POST /engine/ajax/search.php -> .search-item (meme moteur que l'anime)
 // - Film : #film-data[data-newsid] (+ embeds decouverts page, fallback hub fstream)
 // - Serie : #serie-config[data-news-id] + /static/series/N.js (fallback /data/eps_N.txt, /ep-data.php?id=N)
-// - fstream.net = HUB de redirection : bouton "Regarder en streaming" -> fs26.lol
+// - La page relais publie l'adresse actuelle du catalogue films/séries.
 const { DleAdapter, decode } = require('./dle');
 const { fetchText } = require('../http');
 const log = require('../logger');

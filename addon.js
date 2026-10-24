@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 // ═══════════════════════════════════════════════════════════════
-// French-Stream-Full v2.3.1 — add-on Stremio
+// French-Stream-Full v2.4.0 — add-on Stremio
 // ═══════════════════════════════════════════════════════════════
 // • Recherche parallèle (adapters simultanés)
 // • Cache Cinemeta IMDB → titre (évite les re-requêtes)
@@ -24,6 +24,7 @@ const { catalogScore, isMatch } = require('./src/utils/normalize');
 const { fetchText } = require('./src/http');
 const log = require('./src/logger');
 const { buildStreams, resolveDirectStream, parseContentVideoId } = require('./src/streams');
+const { discoverMovieSeriesBase, getDiscoveryStatus } = require('./src/site-discovery');
 
 const SITES = loadSites();
 const adapters = {};
@@ -73,6 +74,7 @@ function toMeta(row) {
 
 // ─── Recherche PARALLELE (tous les adapters en même temps) ───
 async function searchAll(query, type) {
+  await discoverMovieSeriesBase(SITES, adapters);
   const found = new Map();
   // 1. Index local (instant)
   for (const r of searchIndex(query, type)) found.set(r.id, { row: r, score: catalogScore(query, r.title, type, { candYear: r.year }) });
@@ -149,6 +151,7 @@ builder.defineCatalogHandler(async (args) => {
 //  META HANDLER — enrichi avec Cinemeta
 // ═══════════════════════════════════════════════════════════════
 builder.defineMetaHandler(async (args) => {
+  await discoverMovieSeriesBase(SITES, adapters);
   // Cas Cinemeta (tt...)
   if (String(args.id).startsWith('tt')) {
     const entry = await getImdbName(args.id, args.type);
@@ -221,6 +224,7 @@ builder.defineMetaHandler(async (args) => {
 //  STREAM HANDLER — ultra rapide, parallèle
 // ═══════════════════════════════════════════════════════════════
 builder.defineStreamHandler(async (args) => {
+  await discoverMovieSeriesBase(SITES, adapters);
   // Cas A : ID Cinemeta (tt0172495 ou tt0903747:1:2)
   if (String(args.id).startsWith('tt')) {
     try {
@@ -294,7 +298,8 @@ app.get('/play', async (req, res) => {
   const source = req.query.source;
   if (!source) return res.status(400).send('Source manquante');
   try {
-    const direct = await resolveDirectStream(source);
+    const parentReferer = SITES.movieSeriesSite.baseUrl ? `${SITES.movieSeriesSite.baseUrl}/` : undefined;
+    const direct = await resolveDirectStream(source, parentReferer);
     if (direct && direct.url) {
       return res.redirect(307, direct.url);
     }
@@ -308,7 +313,7 @@ app.get('/play', async (req, res) => {
 app.get('/health', (req, res) => {
   const contents = store.allContents().length;
   const adaptersActive = Object.keys(adapters);
-  res.json({ status: 'ok', version: manifest.version, contents, adapters: adaptersActive });
+  res.json({ status: 'ok', version: manifest.version, contents, adapters: adaptersActive, movieSeriesDomain: getDiscoveryStatus() });
 });
 
 // Routeur officiel SDK Stremio

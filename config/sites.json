@@ -9,7 +9,8 @@
   "movieSeriesSite": {
     "enabled": true,
     "name": "French-Stream",
-    "baseUrl": "https://fs26.lol",
+    "baseUrl": "",
+    "discoveryUrl": "https://fstream.net/",
     "ajaxSearch": "/engine/ajax/search.php",
     "serieStatic": "/static/series/{id}.js",
     "serieFallbacks": ["/data/eps_{id}.txt", "/ep-data.php?id={id}"],
@@ -20,8 +21,8 @@
     "name": "FStream-Hub",
     "baseUrl": "https://fstream.net",
     "mode": "hub",
-    "target": "https://fs26.lol",
-    "note": "HUB : le bouton 'Regarder en streaming' pointe vers fs26.lol. Si fstream change de cible, mets la nouvelle URL dans target."
+    "target": "",
+    "note": "Cible découverte depuis le lien 'Regarder en streaming' de la page relais, puis conservée comme dernière adresse vérifiée."
   },
   "settings": {
     "lang": "fr",

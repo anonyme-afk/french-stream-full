@@ -10,6 +10,7 @@ const { buildStreams } = require('../streams');
 const { probeStream } = require('../probe');
 const { ADDON_ID, ADDON_VERSION } = require('../manifest');
 const { score, isMatch } = require('../utils/normalize');
+const { discoverMovieSeriesBase } = require('../site-discovery');
 
 const SITES = loadSites();
 const RENDER_BASE = (process.env.BASE_URL || 'https://french-stream-full.onrender.com').replace(/\/+$/, '');
@@ -110,10 +111,11 @@ async function checkRenderStremioFlow({ label, type, catalogId, query, maxEpisod
               const referer = stream.behaviorHints?.proxyHeaders?.request?.Referer;
               const probe = await probeStream(stream.url, referer);
               if (probe.compatible) stats.directProbeOk++;
-              else stats.directProbeFail++;
+              else { stats.directProbeFail++; stats.errors++; }
               report(`      Contrôle média : HTTP ${probe.status || 0}, ${probe.contentType || 'type inconnu'}, ${probe.compatible ? 'accessible' : 'échec'}`);
             } catch {
               stats.directProbeFail++;
+              stats.errors++;
               report('      Contrôle média : erreur réseau');
             }
           }
@@ -205,6 +207,10 @@ async function checkTitle({ label, site, query, type, episode }) {
 
 (async () => {
   report('Vérification locale French-Stream-Full — aucun jeton ni URL complète ne sera écrit dans ce rapport.');
+  const discovery = await discoverMovieSeriesBase(SITES, adapters);
+  report(discovery.baseUrl
+    ? `Domaine films/séries découvert : ${hostOf(discovery.baseUrl)} (source ${discovery.source})`
+    : `Domaine films/séries introuvable : ${discovery.error || 'aucune adresse de secours'}`);
   await checkRender();
   const cases = [
     ...['Avengers', 'Dune', 'Inception', 'Interstellar', 'Gladiator', 'Titanic', 'Oppenheimer', 'The Matrix', 'Jurassic Park', 'Spider-Man'].map(query => ({ label: 'FILM', site: 'movies', type: 'movie', catalogId: 'fsf-movies', query, episode: null })),

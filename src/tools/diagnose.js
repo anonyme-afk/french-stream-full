@@ -7,6 +7,7 @@ const { AnimeAdapter } = require('../adapters/anime');
 const { MovieSeriesAdapter } = require('../adapters/movies');
 const { probeStream } = require('../probe');
 const { score } = require('../utils/normalize');
+const { findCurrentMovieSeriesUrl, discoverMovieSeriesBase } = require('../site-discovery');
 
 const args = Object.fromEntries(process.argv.slice(2).map((a) => {
   const m = a.replace(/^--/, '').split('=');
@@ -17,6 +18,10 @@ const args = Object.fromEntries(process.argv.slice(2).map((a) => {
   if (args.selftest) {
     const assert = require('node:assert/strict');
     const { norm, isMatch, parseSeasonEpisode, score, catalogScore } = require('../utils/normalize');
+    const testSites = loadSites();
+    assert.equal(testSites.movieSeriesSite.enabled, true);
+    assert.equal(testSites.movieSeriesSite.baseUrl, '');
+    assert.ok(testSites.movieSeriesSite.discoveryUrl);
     console.log('norm =', norm("L'Attaque des Titans"));
     console.log('score naruto =', score('naruto', 'Naruto Shippuden Kai - Saison 1').toFixed(2));
     console.log('isMatch =', isMatch('naruto', 'Naruto Shippuden Kai - Saison 1'));
@@ -48,6 +53,7 @@ const args = Object.fromEntries(process.argv.slice(2).map((a) => {
       { site: 'movies', url: 'https://site.test/show#ep=2&v=vostfr' }
     ]).length, 1);
     assert.equal(extractDirectVideoUrl('{"file":"https:\\/\\/cdn.example.test\\/episode.m3u8?sig=abc"}'), 'https://cdn.example.test/episode.m3u8?sig=abc');
+    assert.equal(findCurrentMovieSeriesUrl('<a href="https://ads.example.test">Publicité</a><a href="https://new.example.test/">Regarder en streaming</a>', 'https://relay.example.test/'), 'https://new.example.test');
     const { addonBuilder } = require('stremio-addon-sdk');
     const { ADDON_ID, ADDON_VERSION, createManifest } = require('../manifest');
     const manifest = createManifest('https://example.test/');
@@ -65,18 +71,22 @@ const args = Object.fromEntries(process.argv.slice(2).map((a) => {
     return;
   }
   const SITES = loadSites();
+  const movieAdapter = new MovieSeriesAdapter('movies', SITES.movieSeriesSite);
+  const discovery = await discoverMovieSeriesBase(SITES, { movies: movieAdapter });
   console.log('=== French-Stream-Full DIAGNOSTIC ===');
   for (const k of ['animeSite', 'movieSeriesSite', 'redirectService']) {
     const s = SITES[k];
-    console.log(`- ${k}: ${s.enabled ? 'ACTIF ' + s.baseUrl : 'DESACTIVE (' + (s._reason || 'off') + ')'}`);
+    const host = s.baseUrl ? new URL(s.baseUrl).host : '';
+    console.log(`- ${k}: ${s.enabled && host ? 'ACTIF ' + host : 'DESACTIVE (' + (s._reason || 'off') + ')'}`);
   }
+  console.log(`- découverte: ${discovery.source}${discovery.baseUrl ? ' -> ' + new URL(discovery.baseUrl).host : ' (échec)'}`);
   if (args.query) {
     const isMovie = args.type === 'movie';
     const Ad = isMovie ? MovieSeriesAdapter : AnimeAdapter;
     const key = isMovie ? 'movieSeriesSite' : 'animeSite';
     const cfg = SITES[key];
     if (!cfg.enabled) { console.log(`\n[SKIP] ${key} desactive`); return; }
-    const ad = new Ad(isMovie ? 'movies' : 'anime', cfg);
+    const ad = isMovie ? movieAdapter : new Ad('anime', cfg);
     console.log(`\nRecherche "${args.query}" sur ${cfg.baseUrl} ...`);
     try {
       const res = await ad.search(args.query);

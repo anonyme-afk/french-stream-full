@@ -24,9 +24,13 @@ async function probeStream(url, referer) {
     try {
       const ctrl = new AbortController();
       const t = setTimeout(() => ctrl.abort(), 5000);
+      let fallbackReferer = '';
+      try { fallbackReferer = `${new URL(url).origin}/`; } catch {}
+      const headers = { 'User-Agent': 'Mozilla/5.0' };
+      if (referer || fallbackReferer) headers.Referer = referer || fallbackReferer;
       const res = await fetch(h.finalUrl || url, {
         signal: ctrl.signal,
-        headers: { 'User-Agent': 'Mozilla/5.0', Referer: referer || 'https://fs26.lol/' }
+        headers
       });
       const txt = await res.text().catch(() => '');
       clearTimeout(t);

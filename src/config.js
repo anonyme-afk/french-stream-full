@@ -13,9 +13,9 @@ function loadSites() {
     const s = raw[key] || {};
     s.baseUrl = clean(s.baseUrl);
     // Desactive proprement si URL d'exemple / vide
-    if (!s.baseUrl || /EXEMPLE/i.test(s.baseUrl)) {
+    if ((!s.baseUrl && !s.discoveryUrl) || /EXEMPLE/i.test(s.baseUrl)) {
       s.enabled = false;
-      s._reason = 'URL non configuree (voir config/sites.json)';
+      s._reason = 'URL et source de découverte non configurées (voir config/sites.json)';
     }
     raw[key] = s;
   }

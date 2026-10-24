@@ -79,12 +79,15 @@ async function headCheck(url, timeout, referer) {
   try {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), timeout || 4000);
+    let fallbackReferer = '';
+    try { fallbackReferer = `${new URL(url).origin}/`; } catch {}
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36'
+    };
+    if (referer || fallbackReferer) headers.Referer = referer || fallbackReferer;
     const res = await fetch(url, {
       method: 'HEAD', signal: ctrl.signal, redirect: 'follow',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36',
-        Referer: referer || 'https://fs26.lol/'
-      }
+      headers
     });
     clearTimeout(t);
     const cl = res.headers.get('content-length');
