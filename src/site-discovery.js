@@ -98,6 +98,21 @@ async function discoverMovieSeriesBase(sites, adapters) {
       // Vérifie que le domaine candidat répond avant de le propager aux adaptateurs.
       const targetPage = await fetchText(`${candidate}/`, { timeout: 8000, retries: 0 });
       if (!targetPage.ok) throw new Error(`site cible HTTP ${targetPage.status}`);
+      const searchCheck = await fetchText(`${candidate}/engine/ajax/search.php`, {
+        site: 'movies',
+        method: 'POST',
+        body: 'query=Naruto&page=1',
+        timeout: 8000,
+        retries: 0,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+          'X-Requested-With': 'XMLHttpRequest',
+          Referer: `${candidate}/`
+        }
+      });
+      if (!searchCheck.ok || !/search-item|search-title/i.test(searchCheck.text || '')) {
+        throw new Error('le domaine cible ne répond pas comme le catalogue attendu');
+      }
       const verifiedBase = new URL(targetPage.url || `${candidate}/`).origin;
       const discoveredAt = Date.now();
       applyMovieBase(sites, adapters, verifiedBase);

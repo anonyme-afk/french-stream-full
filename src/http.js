@@ -47,6 +47,8 @@ async function fetchText(url, opts = {}) {
       const jar = jarGet(host);
       const baseCookie = 'fsschal=k7x2m9q4v3b8; dle_skin=FrenchStream;';
       const res = await fetch(url, {
+        method: opts.method || 'GET',
+        body: opts.body,
         signal: ctrl.signal,
         redirect: 'follow',
         headers: {
