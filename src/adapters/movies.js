@@ -40,6 +40,12 @@ function pickGenres(h) {
   return out;
 }
 
+function detectContentType(html) {
+  if (/id=["']serie-config["']/i.test(html || '')) return 'series';
+  if (/id=["']film-data["']/i.test(html || '')) return 'movie';
+  return null;
+}
+
 class MovieSeriesAdapter extends DleAdapter {
   constructor(siteKey, siteCfg) {
     super(siteKey, siteCfg, null);
@@ -47,6 +53,12 @@ class MovieSeriesAdapter extends DleAdapter {
 
   isSeriePage(html) {
     return /id="serie-config"/i.test(html);
+  }
+
+  async detectContentType(pageUrl) {
+    const response = await fetchText(pageUrl, { site: this.siteKey, timeout: 4500, retries: 0 });
+    if (!response.ok) return null;
+    return detectContentType(response.text);
   }
 
   async serieEpisodes(newsId) {
@@ -162,4 +174,4 @@ class MovieSeriesAdapter extends DleAdapter {
   }
 }
 
-module.exports = { MovieSeriesAdapter };
+module.exports = { MovieSeriesAdapter, detectContentType };

@@ -12,7 +12,7 @@ Chaque partie a demandé un vrai travail de conception, de tests et de correctio
 
 - Nom : `French-Stream-Full`
 - Identifiant stable Stremio : `org.frenchstreamfull.addon`
-- Version du manifeste et du projet : `2.4.1` (2.4.0 avant)
+- Version du manifeste et du projet : `2.4.2` (2.4.1 avant)
 - Types Stremio : `movie`, `series` (les anime sont publiés comme séries)
 - Catalogues : `fsf-movies` et `fsf-series`
 - Logo : `public/logo.png` et `public/logo.svg`

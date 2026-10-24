@@ -27,10 +27,14 @@ const args = Object.fromEntries(process.argv.slice(2).map((a) => {
     console.log('isMatch =', isMatch('naruto', 'Naruto Shippuden Kai - Saison 1'));
     console.log('parse =', JSON.stringify(parseSeasonEpisode('Saison 2 Episode 5')));
     const { DleAdapter } = require('../adapters/dle');
+    const { detectContentType } = require('../adapters/movies');
     const sample = `<div class='search-item' onclick="location.href='/1498756-naruto-test-2025.html'"><div class='search-poster'><img src='https://image.tmdb.org/t/p/w500/x.jpg' alt='Naruto Test' loading='lazy'></div><div class='search-info'><div class='search-title'>Naruto Test (2025)</div></div></div>`;
     const dle = new DleAdapter('test', { baseUrl: 'https://x.test' });
     console.log('parse-search-items =', dle.parseSearchItems(sample).length + ' items (attendu: 1)');
     assert.equal(dle.parseSearchItems(sample).length, 1);
+    assert.equal(detectContentType('<div id="serie-config" data-news-id="42"></div>'), 'series');
+    assert.equal(detectContentType('<div id="film-data" data-newsid="43"></div>'), 'movie');
+    assert.equal(detectContentType('<main class="not-a-content-page"></main>'), null);
     assert.equal(score('Breaking Bad', 'Breaking Bad - Saison 2'), 1);
     assert.ok(score('The Boys', 'The Boys - Saison 4') > score('The Boys', 'The Boys in the Band'));
     assert.ok(catalogScore('Death Note', 'Death Note - Saison 1', 'series') > catalogScore('Death Note', 'Death Note', 'series'));

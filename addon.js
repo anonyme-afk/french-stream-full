@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 // ═══════════════════════════════════════════════════════════════
-// French-Stream-Full v2.4.1 — add-on Stremio
+// French-Stream-Full v2.4.2 — add-on Stremio
 // ═══════════════════════════════════════════════════════════════
 // • Recherche parallèle (adapters simultanés)
 // • Cache Cinemeta IMDB → titre (évite les re-requêtes)
@@ -84,16 +84,23 @@ async function searchAll(query, type) {
   const promises = adapterEntries.map(async ([key, ad]) => {
     try {
       const live = await ad.search(query);
-      const results = [];
-      for (const item of live) {
-        const s = catalogScore(query, item.title, type, { candYear: item.year });
-        if (!isMatch(query, item.title, { candYear: item.year })) continue;
-        const assignedType = type === 'movie' ? 'movie' : (item.title.match(/film/i) ? 'movie' : 'series');
-        const id = indexResult(key, { ...item, type: assignedType }, type);
+      const candidates = live.map((item) => ({
+        item,
+        score: catalogScore(query, item.title, type, { candYear: item.year })
+      })).filter(({ item }) => isMatch(query, item.title, { candYear: item.year }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 8);
+      return (await Promise.all(candidates.map(async ({ item, score }) => {
+        // Le moteur de recherche films/séries mélange parfois les deux types.
+        // Vérifie le marqueur de la fiche avant d'indexer un résultat live.
+        if (key === 'movies' && typeof ad.detectContentType === 'function') {
+          const actualType = await ad.detectContentType(item.url).catch(() => null);
+          if (actualType !== type) return null;
+        }
+        const id = indexResult(key, { ...item, type }, type);
         const row = store.getContent(id);
-        results.push({ id, row, score: s });
-      }
-      return results;
+        return { id, row, score };
+      }))).filter(Boolean);
     } catch (e) {
       log.error(key, 'search', String(e).slice(0, 300), { query });
       return [];
