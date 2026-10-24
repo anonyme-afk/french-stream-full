@@ -73,17 +73,27 @@ function decodeUqload(html) {
 
 // Extraction alternative : regex directe sur les sources vidéo classiques dans le HTML
 function extractDirectVideoUrl(html) {
-  // source src="..."  ou  file:"..." ou player.src("...")
+  // Décode les échappements HTML/JSON courants avant d'inspecter les configs
+  // de lecteurs (JWPlayer, Video.js et variantes JSON).
+  const normalized = String(html || '')
+    .replace(/&amp;/gi, '&')
+    .replace(/\\u002f/gi, '/')
+    .replace(/\\x2f/gi, '/')
+    .replace(/\\\//g, '/')
+    .replace(/\\u003a/gi, ':')
+    .replace(/\\x3a/gi, ':');
   const patterns = [
-    /source\s+src=["']([^"']+\.(?:m3u8|mp4)[^"']*)/i,
-    /file\s*:\s*["']([^"']+\.(?:m3u8|mp4)[^"']*)/i,
-    /player\.src\(\s*["']([^"']+\.(?:m3u8|mp4)[^"']*)/i,
-    /src\s*=\s*["'](https?:\/\/[^"']+\.(?:m3u8|mp4)[^"']*)/i,
-    /(https?:\/\/[^\s"'<>]+\.m3u8[^\s"'<>]*)/i,
+    /(?:file|src|source|hls|url)["']?\s*:\s*["']((?:https?:)?\/\/[^"'\s<>]+?\.(?:m3u8|mp4)(?:\?[^"'\s<>]*)?)/i,
+    /(?:source\s+src|player\.src)\s*[=(]\s*["']((?:https?:)?\/\/[^"'\s<>]+?\.(?:m3u8|mp4)(?:\?[^"'\s<>]*)?)/i,
+    /(?:https?:)?\/\/[^\s"'<>\\]+?\.(?:m3u8|mp4)(?:\?[^\s"'<>\\]*)?/i,
   ];
   for (const p of patterns) {
-    const m = html.match(p);
-    if (m && m[1] && /^https?:/.test(m[1])) return m[1];
+    const m = normalized.match(p);
+    const candidate = m && (m[1] || m[0]);
+    if (candidate) {
+      const absolute = candidate.startsWith('//') ? `https:${candidate}` : candidate;
+      if (/^https?:\/\//i.test(absolute)) return absolute;
+    }
   }
   return null;
 }
@@ -219,7 +229,8 @@ async function buildStreams(pages, want, ctx) {
         const langStr = (s.lang ? s.lang.toUpperCase() : 'FR');
         const hostName = (s.host || p.site || 'Source').toUpperCase();
         const epTag = s.episode != null ? ` S${s.season || want.season || 1} Ep ${s.episode}` : '';
-        const sourceReferer = /^https?:\/\//i.test(s.url) ? s.url : ref;
+        // Le lecteur attend l'origine de la fiche (anime/série), pas son URL à lui-même.
+        const sourceReferer = /^https?:\/\//i.test(p.url) ? p.url : ref;
 
         try {
           const direct = await resolveDirectStream(s.url, sourceReferer);
@@ -288,4 +299,4 @@ async function buildStreams(pages, want, ctx) {
   });
 }
 
-module.exports = { buildStreams, resolveDirectStream, streamCacheKey, parseContentVideoId, uniqueContentPages };
+module.exports = { buildStreams, resolveDirectStream, extractDirectVideoUrl, streamCacheKey, parseContentVideoId, uniqueContentPages };

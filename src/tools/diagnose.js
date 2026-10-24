@@ -30,7 +30,7 @@ const args = Object.fromEntries(process.argv.slice(2).map((a) => {
     assert.ok(score('The Boys', 'The Boys - Saison 4') > score('The Boys', 'The Boys in the Band'));
     assert.ok(catalogScore('Death Note', 'Death Note - Saison 1', 'series') > catalogScore('Death Note', 'Death Note', 'series'));
     assert.equal(isMatch('The Matrix', 'A Glitch in the Matrix'), false);
-    const { streamCacheKey, parseContentVideoId, uniqueContentPages } = require('../streams');
+    const { streamCacheKey, parseContentVideoId, uniqueContentPages, extractDirectVideoUrl } = require('../streams');
     assert.notEqual(
       streamCacheKey('https://site.test/show#ep=1&v=vf', { season: 1, episode: 1 }),
       streamCacheKey('https://site.test/show#ep=1&v=vf', { season: 1, episode: 2 })
@@ -47,6 +47,7 @@ const args = Object.fromEntries(process.argv.slice(2).map((a) => {
       { site: 'movies', url: 'https://site.test/show#ep=1&v=vf' },
       { site: 'movies', url: 'https://site.test/show#ep=2&v=vostfr' }
     ]).length, 1);
+    assert.equal(extractDirectVideoUrl('{"file":"https:\\/\\/cdn.example.test\\/episode.m3u8?sig=abc"}'), 'https://cdn.example.test/episode.m3u8?sig=abc');
     const { addonBuilder } = require('stremio-addon-sdk');
     const { ADDON_ID, ADDON_VERSION, createManifest } = require('../manifest');
     const manifest = createManifest('https://example.test/');
