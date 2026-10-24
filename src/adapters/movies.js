@@ -141,6 +141,14 @@ class MovieSeriesAdapter extends DleAdapter {
         sources.push({ label: `Film • ${host}`, url: u, quality: 'HD', lang, episode: null, version: lang, host });
       }
     });
+    // Iframes détectés (lecteurs intégrés)
+    const iframes = this.extractIframes(h);
+    iframes.slice(0, 4).forEach((u) => {
+      const host = (u.match(/\/\/(?:www\.)?([a-z0-9-]+)/i) || [])[1] || 'lecteur';
+      if (!sources.find((s) => s.url === u)) {
+        sources.push({ label: `Film • ${host} (iframe)`, url: u, quality: 'HD', lang, episode: null, version: lang, host, isIframe: true });
+      }
+    });
     return { title, altTitles: [], year: yearM ? +yearM[1] : null, type: 'movie', synopsis: desc, poster: poster ? this.abs(poster) : null, background: backdrop ? this.abs(backdrop) : null, genres, episodes, sources, newsId };
   }
 

@@ -125,6 +125,18 @@ class DleAdapter {
     });
     return keys.map((k) => ({ host: k, url: epEntry[k] })).filter((x) => x.url);
   }
+
+  // Détecte les lecteurs intégrés via <iframe src="..."> dans le HTML d'une page
+  extractIframes(html) {
+    const iframes = [];
+    const re = /<iframe[^>]+src=["']([^"']+)["'][^>]*>/gi;
+    let m;
+    while ((m = re.exec(html || '')) !== null) {
+      const src = this.abs(m[1]);
+      if (src && !iframes.includes(src)) iframes.push(src);
+    }
+    return iframes;
+  }
 }
 
 module.exports = { DleAdapter, decode };

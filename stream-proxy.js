@@ -4,8 +4,10 @@
 // French Stream Full Proxy — v2.1.0 (fusion catalogue + proxy réseau)
 // ═════════════════════════════════════════════════════════════════════════════
 
-const { addonBuilder, serveHTTP } = require('stremio-addon-sdk');
-const { resolveDirectStream } = require('./src/streams.js');
+const { addonBuilder, getRouter, landingTemplate } = require('stremio-addon-sdk');
+const path = require('path');
+const express = require('express');
+const { buildStreams, resolveDirectStream } = require('./src/streams.js');
 const { MovieSeriesAdapter } = require('./src/adapters/movies.js');
 const { AnimeAdapter } = require('./src/adapters/anime.js');
 const store = require('./src/store');
@@ -143,7 +145,7 @@ const builder = new addonBuilder({
   description: 'Films, séries, animes VF/VOSTFR avec proxy d\'en-têtes réseau stabilisé.',
   resources: ['catalog', 'meta', 'stream'],
   types: ['movie', 'series', 'anime'],
-  idPrefixes: ['tt', 'anime_'],
+  idPrefixes: ['fsf:', 'tt'],
   catalogs: [
     { type: 'movie', id: 'fs_movies', name: 'French Stream - Films' },
     { type: 'series', id: 'fs_series', name: 'French Stream - Séries' },
@@ -243,132 +245,61 @@ builder.defineMetaHandler(async (args) => {
 // STREAM HANDLER (logique dynamique corrigée avec proxy réseau)
 // ══════════════════════════════════════════════════════════════════════════════
 
+const PROXY_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
+  'Accept': '*/*',
+  'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.8'
+};
+
+function streamResult(streams) {
+  return {
+    streams,
+    behaviorHints: { notWebReady: true },
+    proxyHeaders: PROXY_HEADERS
+  };
+}
+
 builder.defineStreamHandler(async (args) => {
-  const id = String(args.id);
-
-  // Vérifier le cache de résolution
-  const cached = getCachedResolution(id);
-  if (cached) return cached;
-
-  let streams = [];
-
-  if (id.includes(':')) {
-    const parts = id.split(':');
-    const imdbId = parts[0];
-    const season = parseInt(parts[1], 10) || 1;
-    const episode = parseInt(parts[2], 10) || null;
-
-    // Choisir l'adapter selon le préfixe de l'ID
-    let Adapter;
-    let siteKey;
-    if (id.startsWith('anime_')) {
-      Adapter = AnimeAdapter;
-      siteKey = 'anime';
-    } else if (id.startsWith('tt')) {
-      Adapter = MovieSeriesAdapter;
-      siteKey = 'movies';
-    }
-
-    if (Adapter && SITES) {
-      const siteCfg = siteKey === 'anime' ? SITES.animeSite : SITES.movieSeriesSite;
-      if (siteCfg) {
-        const ad = new Adapter(siteKey, siteCfg);
-
-        // Récupérer les pages associées à ce contenu via le store
-        const pages = pagesForContent(id);
-
-        if (pages.length) {
-          // Résolution parallèle des sources via resolveDirectStream (proxy réseau)
-          const refererFor = (site) => site === 'anime' ? 'https://w16.french-manga.net/' : 'https://fs26.lol/';
-          const ref = refererFor(siteKey);
-
-          const resolvePromises = pages.slice(0, 3).map(async (page) => {
-            try {
-              const detail = await ad.extractContent(page.url);
-              const sources = detail.sources || [];
-
-              // Filtrer par épisode si pertinent
-              let relevant = sources;
-              if (episode != null) {
-                relevant = sources.filter((s) => s.episode === episode);
-              }
-
-              // Prendre jusqu'à 4 sources par page
-              for (const s of relevant.slice(0, 4)) {
-                try {
-                  const direct = await resolveDirectStream(s.url);
-                  if (direct && direct.url) {
-                    streams.push({
-                      name: `FSF [${(s.lang || 'fr').toUpperCase()}]`,
-                      title: `${detail.title || id} ${s.episode != null ? `Ep ${s.episode}` : ''}\n${(s.host || siteKey).toUpperCase()} • ${s.quality || 'HD'} (Direct)`,
-                      url: direct.url,
-                      behaviorHints: { notWebReady: true }
-                    });
-                  }
-                } catch (e) {
-                  log.warn(siteKey, 'resolve-stream', `Fail ${s.url}: ${String(e).slice(0, 100)}`);
-                }
-              }
-            } catch (e) {
-              log.error(siteKey, 'extract-content', String(e).slice(0, 200), { page: page.url });
-            }
-          });
-
-          await Promise.allSettled(resolvePromises);
-        }
-
-        // Fallback : si aucune page en cache, tenter une recherche live par nom IMDB
-        if (!streams.length && imdbId && imdbId.startsWith('tt')) {
-          try {
-            const entry = await getImdbName(imdbId, args.type || 'movie');
-            if (entry && entry.name) {
-              const searchRes = await searchAll(entry.name, args.type || 'movie');
-              for (const sr of searchRes.slice(0, 2)) {
-                const pgs = pagesForContent(sr.row.id);
-                if (pgs.length) {
-                  const page = pgs[0];
-                  const ad2 = adapters[page.site];
-                  if (ad2) {
-                    const detail = await ad2.extractContent(page.url);
-                    const sources = detail.sources || [];
-                    for (const s of sources.slice(0, 4)) {
-                      try {
-                        const direct = await resolveDirectStream(s.url);
-                        if (direct && direct.url) {
-                          streams.push({
-                            name: `FSF [${(s.lang || 'fr').toUpperCase()}]`,
-                            title: `${detail.title || sr.row.title}\n${(s.host || page.site).toUpperCase()} • ${s.quality || 'HD'} (Direct)`,
-                            url: direct.url,
-                            behaviorHints: { notWebReady: true }
-                          });
-                        }
-                      } catch {}
-                    }
-                  }
-                }
-                if (streams.length) break;
+  // Cas A : ID Cinemeta (tt0172495 ou tt0903747:1:2)
+  if (String(args.id).startsWith('tt')) {
+    try {
+      const parts = String(args.id).split(':');
+      const imdbId = parts[0];
+      const season = parts[1] ? parseInt(parts[1], 10) : 1;
+      const episode = parts[2] ? parseInt(parts[2], 10) : null;
+      const entry = await getImdbName(imdbId, args.type);
+      if (entry && entry.name) {
+        const searchRes = await searchAll(entry.name, args.type);
+        if (searchRes.length) {
+          for (const sr of searchRes.slice(0, 3)) {
+            const pages = pagesForContent(sr.row.id);
+            if (pages.length) {
+              const streams = await buildStreams(pages, { season, episode, version: null }, { adapters, SITES });
+              if (streams.length) {
+                setCachedResolution(args.id, streamResult(streams));
+                return streamResult(streams);
               }
             }
-          } catch (e) {
-            log.error('cinemeta', 'stream-fallback', String(e).slice(0, 200), { id });
           }
         }
       }
+    } catch (e) {
+      log.error('cinemeta', 'stream', String(e).slice(0, 300), { id: args.id });
     }
+    setCachedResolution(args.id, streamResult([]));
+    return streamResult([]);
   }
-
-  const result = {
-    streams,
-    behaviorHints: { notWebReady: true },
-    proxyHeaders: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
-      'Accept': '*/*',
-      'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.8'
-    }
-  };
-
-  setCachedResolution(id, result);
-  return result;
+  // Cas B : ID natif FSF (fsf:anime:hash ou fsf:anime:hash:S1E2)
+  const m = String(args.id).match(/^(fsf:[^:]+:[^:]+)(?::S(\d+)E(\d+))?$/);
+  if (!m) return streamResult([]);
+  const contentId = m[1];
+  const season = m[2] ? parseInt(m[2], 10) : 1;
+  const episode = m[3] ? parseInt(m[3], 10) : null;
+  const pages = pagesForContent(contentId);
+  if (!pages.length) return streamResult([]);
+  const streams = await buildStreams(pages, { season, episode, version: null }, { adapters, SITES });
+  setCachedResolution(args.id, streamResult(streams));
+  return streamResult(streams);
 });
 
 // ══════════════════════════════════════════════════════════════════════════════

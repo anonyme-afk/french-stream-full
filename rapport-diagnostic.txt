@@ -1,0 +1,126 @@
+
+================================================================================
+DIAGNOSTIC STREAM — 2026-10-21 22:22:39
+URL cible : https://w16.french-manga.net/
+Commande  : C:\Users\naneg\AppData\Local\Programs\Python\Python312\python.exe -m yt_dlp --dump-json --verbose --simulate https://w16.french-manga.net/
+================================================================================
+--- STDOUT ---
+--- STDERR ---
+[debug] Command-line config: ['--dump-json', '--verbose', '--simulate', 'https://w16.french-manga.net/']
+[debug] Encodings: locale cp1252, fs utf-8, pref cp1252, out cp1252 (No ANSI), error cp1252 (No ANSI), screen cp1252 (No ANSI)
+[debug] yt-dlp version stable@2026.08.19 from yt-dlp/yt-dlp [594bd50c2] (pip)
+[debug] Python 3.12.10 (CPython AMD64 64bit) - Windows-11-10.0.26300-SP0 (OpenSSL 3.0.16 11 Feb 2025)
+[debug] exe versions: none
+[debug] Optional libraries: certifi-2026.07.22, requests-2.34.2, sqlite3-3.49.1, urllib3-2.8.0, websockets-16.1.1
+[debug] JS runtimes: none
+[debug] Proxy map: {}
+[debug] Request Handlers: urllib, requests, websockets
+[debug] Plugin directories: none
+[debug] Loaded 1744 extractors
+[generic] Extracting URL: https://w16.french-manga.net/
+[generic] w16.french-manga: Downloading webpage
+WARNING: [generic] Falling back on generic information extractor
+[generic] w16.french-manga: Extracting information
+[debug] Looking for embeds
+ERROR: Unsupported URL: https://w16.french-manga.net/
+Traceback (most recent call last):
+  File "C:\Users\naneg\AppData\Local\Programs\Python\Python312\Lib\site-packages\yt_dlp\YoutubeDL.py", line 1731, in wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\naneg\AppData\Local\Programs\Python\Python312\Lib\site-packages\yt_dlp\YoutubeDL.py", line 1866, in __extract_info
+    ie_result = ie.extract(url)
+                ^^^^^^^^^^^^^^^
+  File "C:\Users\naneg\AppData\Local\Programs\Python\Python312\Lib\site-packages\yt_dlp\extractor\common.py", line 765, in extract
+    ie_result = self._real_extract(url)
+                ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\naneg\AppData\Local\Programs\Python\Python312\Lib\site-packages\yt_dlp\extractor\generic.py", line 984, in _real_extract
+    raise UnsupportedError(url)
+yt_dlp.utils.UnsupportedError: Unsupported URL: https://w16.french-manga.net/
+
+--- CODE RETOUR : 1 ---
+================================================================================
+
+
+================================================================================
+DIAGNOSTIC STREAM — 2026-10-21 22:25:05
+URL cible : https://fstream.net/
+Commande  : C:\Users\naneg\AppData\Local\Programs\Python\Python312\python.exe -m yt_dlp --dump-json --verbose --simulate https://fstream.net/
+================================================================================
+--- STDOUT ---
+--- STDERR ---
+[debug] Command-line config: ['--dump-json', '--verbose', '--simulate', 'https://fstream.net/']
+[debug] Encodings: locale cp1252, fs utf-8, pref cp1252, out cp1252 (No ANSI), error cp1252 (No ANSI), screen cp1252 (No ANSI)
+[debug] yt-dlp version stable@2026.08.19 from yt-dlp/yt-dlp [594bd50c2] (pip)
+[debug] Python 3.12.10 (CPython AMD64 64bit) - Windows-11-10.0.26300-SP0 (OpenSSL 3.0.16 11 Feb 2025)
+[debug] exe versions: none
+[debug] Optional libraries: certifi-2026.07.22, requests-2.34.2, sqlite3-3.49.1, urllib3-2.8.0, websockets-16.1.1
+[debug] JS runtimes: none
+[debug] Proxy map: {}
+[debug] Request Handlers: urllib, requests, websockets
+[debug] Plugin directories: none
+[debug] Loaded 1744 extractors
+[generic] Extracting URL: https://fstream.net/
+[generic] fstream: Downloading webpage
+WARNING: [generic] Falling back on generic information extractor
+[generic] fstream: Extracting information
+[debug] Looking for embeds
+ERROR: Unsupported URL: https://fstream.net/
+Traceback (most recent call last):
+  File "C:\Users\naneg\AppData\Local\Programs\Python\Python312\Lib\site-packages\yt_dlp\YoutubeDL.py", line 1731, in wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\naneg\AppData\Local\Programs\Python\Python312\Lib\site-packages\yt_dlp\YoutubeDL.py", line 1866, in __extract_info
+    ie_result = ie.extract(url)
+                ^^^^^^^^^^^^^^^
+  File "C:\Users\naneg\AppData\Local\Programs\Python\Python312\Lib\site-packages\yt_dlp\extractor\common.py", line 765, in extract
+    ie_result = self._real_extract(url)
+                ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\naneg\AppData\Local\Programs\Python\Python312\Lib\site-packages\yt_dlp\extractor\generic.py", line 984, in _real_extract
+    raise UnsupportedError(url)
+yt_dlp.utils.UnsupportedError: Unsupported URL: https://fstream.net/
+
+--- CODE RETOUR : 1 ---
+================================================================================
+
+
+================================================================================
+DIAGNOSTIC STREAM — 2026-10-21 22:26:05
+URL cible : https://fstream.net/
+Commande  : C:\Users\naneg\AppData\Local\Programs\Python\Python312\python.exe -m yt_dlp --dump-json --verbose --simulate https://fstream.net/
+================================================================================
+--- STDOUT ---
+--- STDERR ---
+[debug] Command-line config: ['--dump-json', '--verbose', '--simulate', 'https://fstream.net/']
+[debug] Encodings: locale cp1252, fs utf-8, pref cp1252, out cp1252 (No ANSI), error cp1252 (No ANSI), screen cp1252 (No ANSI)
+[debug] yt-dlp version stable@2026.08.19 from yt-dlp/yt-dlp [594bd50c2] (pip)
+[debug] Python 3.12.10 (CPython AMD64 64bit) - Windows-11-10.0.26300-SP0 (OpenSSL 3.0.16 11 Feb 2025)
+[debug] exe versions: none
+[debug] Optional libraries: certifi-2026.07.22, requests-2.34.2, sqlite3-3.49.1, urllib3-2.8.0, websockets-16.1.1
+[debug] JS runtimes: none
+[debug] Proxy map: {}
+[debug] Request Handlers: urllib, requests, websockets
+[debug] Plugin directories: none
+[debug] Loaded 1744 extractors
+[generic] Extracting URL: https://fstream.net/
+[generic] fstream: Downloading webpage
+WARNING: [generic] Falling back on generic information extractor
+[generic] fstream: Extracting information
+[debug] Looking for embeds
+ERROR: Unsupported URL: https://fstream.net/
+Traceback (most recent call last):
+  File "C:\Users\naneg\AppData\Local\Programs\Python\Python312\Lib\site-packages\yt_dlp\YoutubeDL.py", line 1731, in wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\naneg\AppData\Local\Programs\Python\Python312\Lib\site-packages\yt_dlp\YoutubeDL.py", line 1866, in __extract_info
+    ie_result = ie.extract(url)
+                ^^^^^^^^^^^^^^^
+  File "C:\Users\naneg\AppData\Local\Programs\Python\Python312\Lib\site-packages\yt_dlp\extractor\common.py", line 765, in extract
+    ie_result = self._real_extract(url)
+                ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\naneg\AppData\Local\Programs\Python\Python312\Lib\site-packages\yt_dlp\extractor\generic.py", line 984, in _real_extract
+    raise UnsupportedError(url)
+yt_dlp.utils.UnsupportedError: Unsupported URL: https://fstream.net/
+
+--- CODE RETOUR : 1 ---
+================================================================================
+
