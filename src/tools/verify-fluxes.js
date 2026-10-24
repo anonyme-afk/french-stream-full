@@ -46,67 +46,104 @@ async function checkRender() {
 }
 
 async function renderJSON(path) {
+  const startedAt = Date.now();
   const response = await fetch(`${RENDER_BASE}${path}`, { signal: AbortSignal.timeout(60000) });
   const body = await response.json().catch(() => null);
-  return { status: response.status, body };
+  return { status: response.status, body, elapsedMs: Date.now() - startedAt };
 }
 
-async function checkRenderStremioFlow({ label, type, catalogId, query }) {
+async function checkRenderStremioFlow({ label, type, catalogId, query, maxEpisodes = 1 }) {
   report(`\n--- CHAÎNE API RENDER / STREMIO : ${label} (« ${query} ») ---`);
+  const stats = { label, query, catalogMs: null, metaMs: null, streamMs: 0, catalogCount: 0, episodeCount: 0, streamCount: 0, directCount: 0, externalCount: 0, directProbeOk: 0, directProbeFail: 0, errors: 0 };
   try {
     const catalog = await renderJSON(`/catalog/${type}/${catalogId}/search=${encodeURIComponent(query)}.json`);
     const metas = catalog.body?.metas || [];
-    report(`Catalogue Render : HTTP ${catalog.status}, ${metas.length} résultat(s)`);
-    if (!metas.length) return;
+    stats.catalogMs = catalog.elapsedMs;
+    stats.catalogCount = metas.length;
+    report(`Catalogue Render : HTTP ${catalog.status}, ${metas.length} résultat(s), ${catalog.elapsedMs} ms`);
+    if (catalog.status >= 400 || !metas.length) { stats.errors++; return stats; }
 
     const selected = metas[0];
     report(`  Élément reçu : ${selected.name || '(sans titre)'} (${selected.type || type})`);
     const metaResult = await renderJSON(`/meta/${type}/${encodeURIComponent(selected.id)}.json`);
     const meta = metaResult.body?.meta;
-    report(`Métadonnées Render : HTTP ${metaResult.status}, ${meta?.videos?.length || 0} épisode(s)`);
-    if (!meta) return;
+    stats.metaMs = metaResult.elapsedMs;
+    stats.episodeCount = meta?.videos?.length || 0;
+    report(`Métadonnées Render : HTTP ${metaResult.status}, type=${meta?.type || '(absent)'}, ${stats.episodeCount} épisode(s), ${metaResult.elapsedMs} ms`);
+    if (metaResult.status >= 400 || !meta) { stats.errors++; return stats; }
 
-    const videos = meta.videos?.length ? meta.videos.slice(0, type === 'series' ? 3 : 1) : [{ id: selected.id }];
+    const actualType = meta.type || selected.type || type;
+    const videos = meta.videos?.length ? meta.videos.slice(0, maxEpisodes) : [{ id: selected.id }];
     for (const video of videos) {
       const videoId = video.id;
+      let directProbed = false;
       if (video.season != null || video.episode != null) {
         report(`  Sélection saison ${video.season || 1}, épisode ${video.episode || 1} — ID ${/:\d+:\d+$/.test(videoId) ? 'canonique' : 'à vérifier'}`);
       }
-      const streamResult = await renderJSON(`/stream/${type}/${encodeURIComponent(videoId)}.json`);
+      const streamResult = await renderJSON(`/stream/${actualType}/${encodeURIComponent(videoId)}.json`);
       const streams = streamResult.body?.streams || [];
-      report(`    Flux Render : HTTP ${streamResult.status}, ${streams.length} source(s)`);
-      for (const stream of streams.slice(0, 4)) {
+      stats.streamMs += streamResult.elapsedMs;
+      stats.streamCount += streams.length;
+      report(`    Flux Render : HTTP ${streamResult.status}, ${streams.length} source(s), ${streamResult.elapsedMs} ms`);
+      if (streamResult.status >= 400) stats.errors++;
+      for (const [index, stream] of streams.entries()) {
         if (stream.url) {
-          report(`      Directe : ${hostOf(stream.url)}; en-têtes Stremio ${stream.behaviorHints?.proxyHeaders?.request ? 'présents' : 'absents'}`);
+          stats.directCount++;
+          if (index < 4) report(`      Directe : ${hostOf(stream.url)}; en-têtes Stremio ${stream.behaviorHints?.proxyHeaders?.request ? 'présents' : 'absents'}`);
+          if (!directProbed) {
+            directProbed = true;
+            try {
+              const referer = stream.behaviorHints?.proxyHeaders?.request?.Referer;
+              const probe = await probeStream(stream.url, referer);
+              if (probe.compatible) stats.directProbeOk++;
+              else stats.directProbeFail++;
+              report(`      Contrôle média : HTTP ${probe.status || 0}, ${probe.contentType || 'type inconnu'}, ${probe.compatible ? 'accessible' : 'échec'}`);
+            } catch {
+              stats.directProbeFail++;
+              report('      Contrôle média : erreur réseau');
+            }
+          }
         } else if (stream.externalUrl) {
-          report(`      Page externe : ${hostOf(stream.externalUrl)} (pas une lecture intégrée)`);
+          stats.externalCount++;
+          if (index < 4) report(`      Page externe : ${hostOf(stream.externalUrl)} (pas une lecture intégrée)`);
         } else {
-          report('      Réponse sans URL vidéo reconnue.');
+          stats.errors++;
+          if (index < 4) report('      Réponse sans URL vidéo reconnue.');
         }
       }
     }
+    return stats;
   } catch (error) {
+    stats.errors++;
     report(`  Échec chaîne Render : ${error.name || 'erreur réseau'} — ${redact(error.message || String(error)).slice(0, 180)}`);
+    return stats;
   }
 }
 
 async function checkTitle({ label, site, query, type, episode }) {
   const adapter = adapters[site];
+  const stats = { searchMs: null, detailMs: null, localEpisodeCount: 0, localSourceCount: 0, assembledStreamCount: 0 };
   report(`\n=== ${label} | recherche « ${query} » ===`);
   if (!adapter || !adapter.enabled) {
     report('Adaptateur désactivé dans config/sites.json');
-    return;
+    return stats;
   }
 
   try {
+    let startedAt = Date.now();
     const found = await adapter.search(query);
-    report(`Résultats recherche : ${found.length}`);
+    stats.searchMs = Date.now() - startedAt;
+    report(`Étape recherche ${site} : ${stats.searchMs} ms, ${found.length} résultat(s)`);
     const item = found[0];
-    if (!item) return;
+    if (!item) return stats;
     report(`Premier résultat : ${item.title}`);
 
+    startedAt = Date.now();
     const detail = await adapter.extractContent(item.url);
-    report(`Fiche : titre=${detail.title || '(vide)'} type=${detail.type || type} épisodes=${(detail.episodes || []).length} sources=${(detail.sources || []).length}`);
+    stats.detailMs = Date.now() - startedAt;
+    stats.localEpisodeCount = (detail.episodes || []).length;
+    stats.localSourceCount = (detail.sources || []).length;
+    report(`Étape fiche ${site} : ${stats.detailMs} ms; titre=${detail.title || '(vide)'} type=${detail.type || type} épisodes=${stats.localEpisodeCount} sources=${stats.localSourceCount}`);
 
     const candidates = (detail.sources || []).filter(s => episode == null || s.episode === episode);
     const seenHosts = new Set();
@@ -120,8 +157,11 @@ async function checkTitle({ label, site, query, type, episode }) {
     if (!perHost.length) report('  Aucune source déclarée pour cet épisode/film.');
 
     const want = { season: 1, episode, version: null };
+    const assembleStartedAt = Date.now();
     const streams = await buildStreams([{ url: item.url, site }], want, { adapters, SITES });
-    report(`Réponse assemblée pour Stremio : ${streams.length} source(s)`);
+    const assembleMs = Date.now() - assembleStartedAt;
+    stats.assembledStreamCount = streams.length;
+    report(`Étape résolution Stremio locale : ${assembleMs} ms, ${streams.length} source(s)`);
     let directChecks = 0;
     for (const stream of streams) {
       if (stream.url) {
@@ -146,23 +186,39 @@ async function checkTitle({ label, site, query, type, episode }) {
   } catch (error) {
     report(`Échec vérification : ${error.name || 'erreur'} — ${redact(error.message || String(error)).slice(0, 220)}`);
   }
+  return stats;
 }
 
 (async () => {
   report('Vérification locale French-Stream-Full — aucun jeton ni URL complète ne sera écrit dans ce rapport.');
   await checkRender();
-  await checkRenderStremioFlow({ label: 'série A', type: 'series', catalogId: 'fsf-series', query: 'Breaking Bad' });
-  await checkRenderStremioFlow({ label: 'série B', type: 'series', catalogId: 'fsf-series', query: 'Game of Thrones' });
-  await checkRenderStremioFlow({ label: 'anime', type: 'series', catalogId: 'fsf-series', query: 'Naruto' });
-  await checkRenderStremioFlow({ label: 'film témoin', type: 'movie', catalogId: 'fsf-movies', query: 'Avengers' });
-  await checkTitle({ label: 'SÉRIE A', site: 'movies', query: 'Breaking Bad', type: 'series', episode: 1 });
-  await checkTitle({ label: 'SÉRIE B', site: 'movies', query: 'Game of Thrones', type: 'series', episode: 1 });
-  await checkTitle({ label: 'FILM A', site: 'movies', query: 'Avengers', type: 'movie', episode: null });
-  await checkTitle({ label: 'FILM B', site: 'movies', query: 'Dune', type: 'movie', episode: null });
-  await checkTitle({ label: 'ANIME A', site: 'anime', query: 'Naruto', type: 'series', episode: 1 });
-  await checkTitle({ label: 'ANIME B', site: 'anime', query: 'One Piece', type: 'series', episode: 1 });
+  const cases = [
+    ...['Avengers', 'Dune', 'Inception', 'Interstellar', 'Gladiator', 'Titanic', 'Oppenheimer', 'The Matrix', 'Jurassic Park', 'Spider-Man'].map(query => ({ label: 'FILM', site: 'movies', type: 'movie', catalogId: 'fsf-movies', query, episode: null })),
+    ...['Breaking Bad', 'Game of Thrones', 'Stranger Things', 'The Walking Dead', 'The Boys', 'Sherlock', 'Prison Break', 'La Casa de Papel', 'The Last of Us', 'The Office'].map(query => ({ label: 'SÉRIE', site: 'movies', type: 'series', catalogId: 'fsf-series', query, episode: 1 })),
+    ...['Naruto', 'One Piece', 'L’Attaque des Titans', 'Demon Slayer', 'Jujutsu Kaisen', 'Death Note', 'Dragon Ball Z', 'My Hero Academia', 'One Punch Man', 'Tokyo Ghoul'].map(query => ({ label: 'ANIME', site: 'anime', type: 'series', catalogId: 'fsf-series', query, episode: 1 }))
+  ];
+  const totals = { FILM: { tested: 0, results: 0, episodes: 0, direct: 0, external: 0, probeOk: 0, probeFail: 0, errors: 0, localSources: 0, localStreams: 0 }, SÉRIE: { tested: 0, results: 0, episodes: 0, direct: 0, external: 0, probeOk: 0, probeFail: 0, errors: 0, localSources: 0, localStreams: 0 }, ANIME: { tested: 0, results: 0, episodes: 0, direct: 0, external: 0, probeOk: 0, probeFail: 0, errors: 0, localSources: 0, localStreams: 0 } };
+  for (const testCase of cases) {
+    const result = await checkRenderStremioFlow(testCase);
+    const local = await checkTitle({ label: `LOCAL ${testCase.label}`, site: testCase.site, query: testCase.query, type: testCase.type, episode: testCase.episode });
+    const total = totals[testCase.label];
+    total.tested++;
+    total.results += result.catalogCount;
+    total.episodes += result.episodeCount;
+    total.direct += result.directCount;
+    total.external += result.externalCount;
+    total.probeOk += result.directProbeOk;
+    total.probeFail += result.directProbeFail;
+    total.errors += result.errors;
+    total.localSources += local.localSourceCount;
+    total.localStreams += local.assembledStreamCount;
+  }
+  report('\n=== SYNTHÈSE 30 CAS ===');
+  for (const [type, total] of Object.entries(totals)) {
+    report(`${type}: ${total.tested} test(s), ${total.results} résultat(s) catalogue Render, ${total.episodes} épisode(s), ${total.direct} flux directs / ${total.external} pages externes Render, médias accessibles ${total.probeOk}/${total.probeOk + total.probeFail}, ${total.localSources} source(s) trouvée(s) localement, ${total.localStreams} flux assemblé(s) localement, ${total.errors} erreur(s) Render`);
+  }
   if (customSeries) {
-    await checkRenderStremioFlow({ label: 'série à diagnostiquer', type: 'series', catalogId: 'fsf-series', query: customSeries });
+    await checkRenderStremioFlow({ label: 'série à diagnostiquer', type: 'series', catalogId: 'fsf-series', query: customSeries, maxEpisodes: 3 });
     await checkTitle({ label: 'SÉRIE À DIAGNOSTIQUER', site: 'movies', query: customSeries, type: 'series', episode: 1 });
   }
   report('\nFin. Le rapport distingue les sources annoncées par le site et les sources réellement retournées à Stremio.');

@@ -12,9 +12,15 @@ let store = { contents: {}, pages: {}, episodes: [], streamCache: {}, diagnostic
 try {
   if (fs.existsSync(DB_PATH)) store = { ...store, ...JSON.parse(fs.readFileSync(DB_PATH, 'utf8')) };
 } catch {}
+// Les URL de flux sont temporaires; ne pas réutiliser celles d'un ancien processus.
+store.streamCache = {};
 
 function save() {
-  try { fs.writeFileSync(DB_PATH, JSON.stringify(store)); } catch {}
+  try {
+    const persistent = { ...store };
+    delete persistent.streamCache;
+    fs.writeFileSync(DB_PATH, JSON.stringify(persistent));
+  } catch {}
 }
 
 const { norm } = require('./utils/normalize');
@@ -30,7 +36,7 @@ function upsertContent(c) {
   return c.id;
 }
 
-function upsertPage(p) {
+function upsertPage(p, persist = true) {
   store.pages[p.url] = {
     url: p.url, site: p.site, contentId: p.contentId || null,
     season: p.season ?? null, episode: p.episode ?? null,
@@ -42,7 +48,12 @@ function upsertPage(p) {
       store.episodes.push({ contentId: p.contentId, season: p.season, episode: p.episode, title: p.episodeTitle || null, pageUrl: p.url });
     }
   }
-  save();
+  if (persist) save();
+}
+
+function upsertPages(pages) {
+  for (const page of pages || []) upsertPage(page, false);
+  if (pages && pages.length) save();
 }
 
 function getContent(id) { return store.contents[id] || null; }
@@ -66,6 +77,12 @@ function logCrawl(site, url, op, status, detail) {
 }
 
 function getCache(pageUrl) { return store.streamCache[pageUrl] || null; }
-function setCache(pageUrl, data) { store.streamCache[pageUrl] = { ...data, verifiedAt: Date.now() }; save(); }
+function setCache(pageUrl, data) {
+  // Cache RAM bornée pour ne pas gonfler pendant les longues sessions Render.
+  if (!Object.prototype.hasOwnProperty.call(store.streamCache, pageUrl) && Object.keys(store.streamCache).length >= 1000) {
+    delete store.streamCache[Object.keys(store.streamCache)[0]];
+  }
+  store.streamCache[pageUrl] = { ...data, verifiedAt: Date.now() };
+}
 
-module.exports = { DB_PATH, upsertContent, upsertPage, getContent, contentsByType, episodesFor, allContents, logDiag, logCrawl, getCache, setCache, store };
+module.exports = { DB_PATH, upsertContent, upsertPage, upsertPages, getContent, contentsByType, episodesFor, allContents, logDiag, logCrawl, getCache, setCache, store };

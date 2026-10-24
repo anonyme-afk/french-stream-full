@@ -26,7 +26,7 @@ const args = Object.fromEntries(process.argv.slice(2).map((a) => {
     const dle = new DleAdapter('test', { baseUrl: 'https://x.test' });
     console.log('parse-search-items =', dle.parseSearchItems(sample).length + ' items (attendu: 1)');
     assert.equal(dle.parseSearchItems(sample).length, 1);
-    const { streamCacheKey, parseContentVideoId } = require('../streams');
+    const { streamCacheKey, parseContentVideoId, uniqueContentPages } = require('../streams');
     assert.notEqual(
       streamCacheKey('https://site.test/show#ep=1&v=vf', { season: 1, episode: 1 }),
       streamCacheKey('https://site.test/show#ep=1&v=vf', { season: 1, episode: 2 })
@@ -38,11 +38,17 @@ const args = Object.fromEntries(process.argv.slice(2).map((a) => {
     assert.deepEqual(parseContentVideoId('fsf:movies:abc123:1:7'), { contentId: 'fsf:movies:abc123', season: 1, episode: 7 });
     assert.deepEqual(parseContentVideoId('fsf:anime:def456:S2E3'), { contentId: 'fsf:anime:def456', season: 2, episode: 3 });
     assert.equal(parseContentVideoId('fsf:anime:def456:bad'), null);
+    assert.equal(uniqueContentPages([
+      { site: 'movies', url: 'https://site.test/show' },
+      { site: 'movies', url: 'https://site.test/show#ep=1&v=vf' },
+      { site: 'movies', url: 'https://site.test/show#ep=2&v=vostfr' }
+    ]).length, 1);
     const { addonBuilder } = require('stremio-addon-sdk');
     const manifestBuilder = new addonBuilder({ id: 'test.addon', version: '1.0.0', name: 'test', description: 'test', resources: ['stream'], types: ['movie', 'series'], catalogs: [] });
     manifestBuilder.defineStreamHandler(() => ({ streams: [] }));
     assert.deepEqual(manifestBuilder.getInterface().manifest.types, ['movie', 'series']);
     console.log('series-video-id = canonical and legacy episode IDs parsed');
+    console.log('stream-pages = duplicate episode pages collapsed to one source page');
     console.log('SELFTEST OK');
     return;
   }

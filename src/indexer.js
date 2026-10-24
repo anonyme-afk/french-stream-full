@@ -14,9 +14,10 @@ function indexResult(site, item, type) {
   store.upsertContent({ id, title: item.title, altTitles: item.altTitles || [], year: item.year, type: type || item.type || 'movie', synopsis: item.synopsis, poster: item.poster, background: item.background, genres: item.genres });
   store.upsertPage({ url: item.url, site, contentId: id, season: item.season ?? null, episode: item.episode ?? null, status: 200 });
   if (item.episodes && item.episodes.length) {
-    for (const ep of item.episodes.slice(0, 200)) {
-      store.upsertPage({ url: `${item.url}#ep=${ep.episode}&v=${(ep.version || 'vf').toLowerCase()}`, site, contentId: id, season: ep.season, episode: ep.episode, episodeTitle: ep.title, status: 200 });
-    }
+    store.upsertPages(item.episodes.slice(0, 200).map(ep => ({
+      url: `${item.url}#ep=${ep.episode}&v=${(ep.version || 'vf').toLowerCase()}`,
+      site, contentId: id, season: ep.season, episode: ep.episode, episodeTitle: ep.title, status: 200
+    })));
   }
   return id;
 }

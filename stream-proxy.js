@@ -205,17 +205,15 @@ builder.defineMetaHandler(async (args) => {
           store.upsertContent({ ...row, type: detail.type });
         }
         if (detail && detail.episodes && detail.episodes.length) {
-          for (const ep of detail.episodes) {
-            store.upsertPage({
-              url: `${page.url}#ep=${ep.episode}&v=${(ep.version || 'vf').toLowerCase()}`,
-              site: page.site,
-              contentId: args.id,
-              season: ep.season || 1,
-              episode: ep.episode,
-              episodeTitle: ep.title,
-              status: 200
-            });
-          }
+          store.upsertPages(detail.episodes.map(ep => ({
+            url: `${page.url}#ep=${ep.episode}&v=${(ep.version || 'vf').toLowerCase()}`,
+            site: page.site,
+            contentId: args.id,
+            season: ep.season || 1,
+            episode: ep.episode,
+            episodeTitle: ep.title,
+            status: 200
+          })));
           eps = store.episodesFor(args.id);
         }
         // Enrich metadata from detail

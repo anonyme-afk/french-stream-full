@@ -155,6 +155,19 @@ function parseContentVideoId(id) {
   };
 }
 
+function uniqueContentPages(pages = []) {
+  const uniquePages = [];
+  const pageKeys = new Set();
+  for (const page of pages) {
+    const baseUrl = String(page.url || '').split('#')[0];
+    const key = `${page.site}|${baseUrl}`;
+    if (!baseUrl || pageKeys.has(key)) continue;
+    pageKeys.add(key);
+    uniquePages.push({ ...page, url: baseUrl });
+  }
+  return uniquePages;
+}
+
 // ──────────────────────────────────────────────
 //  Build streams — PARALLEL + filtered
 // ──────────────────────────────────────────────
@@ -163,16 +176,16 @@ async function buildStreams(pages, want, ctx) {
   const streams = [];
   const cacheMinutes = SITES.settings.cacheStreamMinutes ?? 10;
   const refererFor = (site) => site === 'anime' ? 'https://w16.french-manga.net/' : 'https://fs26.lol/';
+  const uniquePages = uniqueContentPages(pages);
 
   // Deadline globale : jamais plus de ~12s pour tout le handler stream
   const deadline = Date.now() + 12000;
   const timeLeft = () => deadline - Date.now();
 
   // Process up to 3 pages (not just 1 anymore)
-  for (const p of pages.slice(0, 3)) {
+  for (const p of uniquePages.slice(0, 3)) {
     if (timeLeft() < 2500) break;
     try {
-      const fragment = p.url.match(/#ep=(\d+)&v=([a-z]+)/i);
       const cacheKey = streamCacheKey(p.url, want);
       const cached = cacheFresh(store.getCache(cacheKey), cacheMinutes);
       if (cached && !cached.stale && cached.items) {
@@ -186,7 +199,7 @@ async function buildStreams(pages, want, ctx) {
       let list = [];
       if (want.episode != null) {
         const pageBase = p.url.split('#')[0];
-        const res = await ad.sourcesForEpisode(pageBase, want.episode, want.version || (fragment && fragment[2]) || null);
+        const res = await ad.sourcesForEpisode(pageBase, want.episode, want.version || null);
         title = res.title;
         list = res.sources;
       } else {
@@ -276,4 +289,4 @@ async function buildStreams(pages, want, ctx) {
   });
 }
 
-module.exports = { buildStreams, resolveDirectStream, streamCacheKey, parseContentVideoId };
+module.exports = { buildStreams, resolveDirectStream, streamCacheKey, parseContentVideoId, uniqueContentPages };
