@@ -18,6 +18,10 @@ function hostOf(value) {
   try { return new URL(value).hostname; } catch { return '(URL invalide)'; }
 }
 
+function redact(value) {
+  return String(value || '').replace(/https?:\/\/[^\s)]+/gi, '[URL masquée]');
+}
+
 function report(message = '') { process.stdout.write(message + '\n'); }
 
 async function checkRender() {
@@ -62,7 +66,7 @@ async function checkTitle({ label, site, query, type, episode }) {
       seenHosts.add(key);
       return true;
     }).slice(0, 8);
-    for (const source of perHost) report(`  Source ${source.host || hostOf(source.url)} (${source.lang || source.version || 'langue inconnue'})`);
+    for (const source of perHost) report(`  Source ${redact(source.host || hostOf(source.url))} (${source.lang || source.version || 'langue inconnue'})`);
     if (!perHost.length) report('  Aucune source déclarée pour cet épisode/film.');
 
     const want = { season: 1, episode, version: null };
@@ -75,7 +79,7 @@ async function checkTitle({ label, site, query, type, episode }) {
     }
     if (!streams.length) report('  Rien ne prouve encore qu’un flux soit lisible. Vérifie la lecture dans Stremio après installation locale.');
   } catch (error) {
-    report(`Échec vérification : ${error.name || 'erreur'} — ${(error.message || String(error)).slice(0, 220)}`);
+    report(`Échec vérification : ${error.name || 'erreur'} — ${redact(error.message || String(error)).slice(0, 220)}`);
   }
 }
 
@@ -87,6 +91,6 @@ async function checkTitle({ label, site, query, type, episode }) {
   await checkTitle({ label: 'ANIME', site: 'anime', query: 'Naruto', type: 'series', episode: 1 });
   report('\nFin. Le rapport distingue les sources annoncées par le site et les sources réellement retournées à Stremio.');
 })().catch((error) => {
-  report(`Erreur générale : ${error.name || 'erreur'} — ${(error.message || String(error)).slice(0, 220)}`);
+  report(`Erreur générale : ${error.name || 'erreur'} — ${redact(error.message || String(error)).slice(0, 220)}`);
   process.exitCode = 1;
 });
