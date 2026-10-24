@@ -11,6 +11,7 @@ const { probeStream } = require('../probe');
 
 const SITES = loadSites();
 const RENDER_BASE = (process.env.BASE_URL || 'https://french-stream-full.onrender.com').replace(/\/+$/, '');
+const customSeries = process.argv.slice(2).find(arg => arg.startsWith('--series='))?.slice('--series='.length).trim();
 const adapters = {
   anime: new AnimeAdapter('anime', SITES.animeSite),
   movies: new MovieSeriesAdapter('movies', SITES.movieSeriesSite)
@@ -160,6 +161,10 @@ async function checkTitle({ label, site, query, type, episode }) {
   await checkTitle({ label: 'FILM B', site: 'movies', query: 'Dune', type: 'movie', episode: null });
   await checkTitle({ label: 'ANIME A', site: 'anime', query: 'Naruto', type: 'series', episode: 1 });
   await checkTitle({ label: 'ANIME B', site: 'anime', query: 'One Piece', type: 'series', episode: 1 });
+  if (customSeries) {
+    await checkRenderStremioFlow({ label: 'série à diagnostiquer', type: 'series', catalogId: 'fsf-series', query: customSeries });
+    await checkTitle({ label: 'SÉRIE À DIAGNOSTIQUER', site: 'movies', query: customSeries, type: 'series', episode: 1 });
+  }
   report('\nFin. Le rapport distingue les sources annoncées par le site et les sources réellement retournées à Stremio.');
 })().catch((error) => {
   report(`Erreur générale : ${error.name || 'erreur'} — ${redact(error.message || String(error)).slice(0, 220)}`);
