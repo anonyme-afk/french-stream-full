@@ -13,13 +13,76 @@ const log = require('./logger');
 // ──────────────────────────────────────────────
 //  Unpacker p,a,c,k,e,d
 // ──────────────────────────────────────────────
+function readJsString(input, start) {
+  const quote = input[start];
+  if (quote !== '"' && quote !== "'") return null;
+  let value = '';
+  for (let i = start + 1; i < input.length; i++) {
+    const ch = input[i];
+    if (ch === quote) return { value, end: i + 1 };
+    if (ch !== '\\') { value += ch; continue; }
+    const next = input[++i];
+    if (next == null) return null;
+    if (next === 'x' && /^[\da-f]{2}$/i.test(input.slice(i + 1, i + 3))) {
+      value += String.fromCharCode(parseInt(input.slice(i + 1, i + 3), 16)); i += 2; continue;
+    }
+    if (next === 'u' && /^[\da-f]{4}$/i.test(input.slice(i + 1, i + 5))) {
+      value += String.fromCharCode(parseInt(input.slice(i + 1, i + 5), 16)); i += 4; continue;
+    }
+    const escapes = { n: '\n', r: '\r', t: '\t', b: '\b', f: '\f', v: '\v', '0': '\0' };
+    if (next === '\n') continue;
+    if (next === '\r') { if (input[i + 1] === '\n') i++; continue; }
+    value += Object.prototype.hasOwnProperty.call(escapes, next) ? escapes[next] : next;
+  }
+  return null;
+}
+
+function packerWord(value, radix) {
+  if (value < radix) return value > 35 ? String.fromCharCode(value + 29) : value.toString(36);
+  return packerWord(Math.floor(value / radix), radix) + packerWord(value % radix, radix);
+}
+
 function unpack(packed) {
+  // Décode le format P.A.C.K.E.R. en texte seulement. Le JavaScript distant
+  // n'est jamais évalué dans le processus de l'addon.
   try {
-    const fn = new Function('return ' + packed.replace('eval(', '('));
-    return fn();
+    const call = /return\s+p\s*\}\s*\(/i.exec(String(packed || ''));
+    if (!call) return null;
+    let i = call.index + call[0].length;
+    const skip = () => { while (/\s/.test(packed[i] || '')) i++; };
+    const readString = () => { skip(); const token = readJsString(packed, i); if (token) i = token.end; return token?.value ?? null; };
+    const readNumber = () => { skip(); const m = /^\d+/.exec(packed.slice(i)); if (!m) return null; i += m[0].length; return Number(m[0]); };
+    const comma = () => { skip(); if (packed[i] !== ',') return false; i++; return true; };
+
+    const source = readString();
+    if (source == null || !comma()) return null;
+    const radix = readNumber();
+    if (!Number.isInteger(radix) || radix < 2 || radix > 62 || !comma()) return null;
+    const count = readNumber();
+    if (!Number.isInteger(count) || count < 0 || count > 10000 || !comma()) return null;
+    const table = readString();
+    if (table == null) return null;
+    const keys = table.split('|');
+    let decoded = source;
+    for (let n = Math.min(count, keys.length) - 1; n >= 0; n--) {
+      if (!keys[n]) continue;
+      const token = packerWord(n, radix).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      decoded = decoded.replace(new RegExp(`(^|[^A-Za-z0-9_$])${token}(?=$|[^A-Za-z0-9_$])`, 'g'), (_match, prefix) => prefix + keys[n]);
+    }
+    return decoded;
   } catch {
     return null;
   }
+}
+
+function decodePackedVideo(html) {
+  const pattern = /eval\(function\(p,a,c,k,e,d\)[\s\S]{0,30000}?return\s+p\s*\}\s*\([\s\S]{0,200000}?\)\)/gi;
+  for (const match of String(html || '').matchAll(pattern)) {
+    const decoded = unpack(match[0]);
+    const mediaUrl = decoded && extractDirectVideoUrl(decoded);
+    if (mediaUrl) return mediaUrl;
+  }
+  return null;
 }
 
 // ──────────────────────────────────────────────
@@ -60,12 +123,7 @@ function decodeFsvid(html, hostname) {
 
 function decodeUqload(html) {
   try {
-    const m = html.match(/eval\(function\(p,a,c,k,e,d\)[\s\S]+?\.split\('\|'\)\)\)/);
-    if (!m) return null;
-    const unp = unpack(m[0]);
-    if (!unp) return null;
-    const match = unp.match(/https?:\/\/[^\s"'<>]+\.(?:mp4|m3u8)[^\s"'<>]*/i);
-    return match ? match[0] : null;
+    return decodePackedVideo(html);
   } catch {
     return null;
   }
@@ -134,7 +192,7 @@ async function resolveDirectStream(url, pageReferer) {
     if (/voe\.|dood\.|streamtape\.|filemoon\.|vidoza\.|netu\.|luluvid\.|vidhsareup\./i.test(url)) {
       const r = await fetchText(url, opts);
       if (r.ok && r.text) {
-        const u = extractDirectVideoUrl(r.text);
+        const u = decodePackedVideo(r.text) || extractDirectVideoUrl(r.text);
         if (u) return { url: u, streamType: u.includes('.m3u8') ? 'hls' : 'mp4' };
       }
     }
@@ -305,4 +363,4 @@ async function buildStreams(pages, want, ctx) {
   });
 }
 
-module.exports = { buildStreams, resolveDirectStream, extractDirectVideoUrl, streamCacheKey, parseContentVideoId, uniqueContentPages };
+module.exports = { buildStreams, resolveDirectStream, extractDirectVideoUrl, streamCacheKey, parseContentVideoId, uniqueContentPages, unpack, decodePackedVideo };

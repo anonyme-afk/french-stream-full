@@ -39,7 +39,13 @@ const args = Object.fromEntries(process.argv.slice(2).map((a) => {
     assert.ok(score('The Boys', 'The Boys - Saison 4') > score('The Boys', 'The Boys in the Band'));
     assert.ok(catalogScore('Death Note', 'Death Note - Saison 1', 'series') > catalogScore('Death Note', 'Death Note', 'series'));
     assert.equal(isMatch('The Matrix', 'A Glitch in the Matrix'), false);
-    const { streamCacheKey, parseContentVideoId, uniqueContentPages, extractDirectVideoUrl } = require('../streams');
+    const { streamCacheKey, parseContentVideoId, uniqueContentPages, extractDirectVideoUrl, unpack, decodePackedVideo } = require('../streams');
+    const packedFixture = `eval(function(p,a,c,k,e,d){return p}('0',10,1,'https://cdn.example.test/video.m3u8'.split('|'),0,{}))`;
+    assert.equal(unpack(packedFixture), 'https://cdn.example.test/video.m3u8');
+    assert.equal(decodePackedVideo(packedFixture), 'https://cdn.example.test/video.m3u8');
+    assert.equal(unpack(`eval(function(p,a,c,k,e,d){return p}('0',10,1,'x'.split('|'),0,{}))`), 'x');
+    const base62Words = Array.from({ length: 37 }, (_, i) => i === 36 ? 'video' : `unused${i}`).join('|');
+    assert.equal(unpack(`eval(function(p,a,c,k,e,d){return p}('A',62,37,'${base62Words}'.split('|'),0,{}))`), 'video');
     assert.notEqual(
       streamCacheKey('https://site.test/show#ep=1&v=vf', { season: 1, episode: 1 }),
       streamCacheKey('https://site.test/show#ep=1&v=vf', { season: 1, episode: 2 })
