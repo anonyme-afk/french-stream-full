@@ -2,6 +2,12 @@
 
 Add-on Stremio modulaire pour rechercher des films, des séries et des anime, avec des résultats en VF/VOSTFR.
 
+## À propos du projet
+
+Ce projet a été réalisé par un développeur indépendant, sans commande, affiliation ni autorisation de French-Stream ou French-Manga. Il ne s’agit pas d’un produit officiel et ces noms ainsi que les marques associées restent ceux de leurs propriétaires respectifs.
+
+Chaque partie a demandé un vrai travail de conception, de tests et de corrections : recherche, fiches, saisons et épisodes, anime, résolution des flux, intégration Stremio et hébergement. Le projet a avancé au fil de nombreux essais et difficultés rencontrées.
+
 ## Identité et manifeste
 
 - Nom : `French-Stream-Full`
