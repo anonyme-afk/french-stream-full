@@ -47,7 +47,11 @@ async function main() {
       console.log(`\n${test.label} ${test.query}: ${detail.title}; newsId présent=${!!detail.newsId}; épisodes exposés=${detail.episodes.length}; saisons exposées=${seasons}`);
       mapSummary('carte', raw);
     } catch (error) {
-      console.log(`${test.label} ${test.query}: erreur ${error.name || 'inconnue'}`);
+      const detail = String(error?.cause?.code || error?.message || error.name || 'erreur')
+        .replace(/https?:\/\/\S+/gi, '[adresse masquée]')
+        .replace(/[?&](?:token|key|sig|signature)=[^&\s]+/gi, '[paramètre masqué]')
+        .slice(0, 120);
+      console.log(`${test.label} ${test.query}: échec ${detail}`);
     }
   }
 }
