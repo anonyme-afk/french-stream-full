@@ -93,7 +93,7 @@ async function checkRenderStremioFlow({ label, type, catalogId, query, maxEpisod
       const videoId = video.id;
       let directProbed = false;
       if (video.season != null || video.episode != null) {
-        report(`  Sélection saison ${video.season || 1}, épisode ${video.episode || 1} — ID ${/:\d+:\d+$/.test(videoId) ? 'canonique' : 'à vérifier'}`);
+        report(`  Sélection saison ${video.season ?? 1}, épisode ${video.episode ?? 1} — ID ${/:\d+:\d+$/.test(videoId) ? 'canonique' : 'à vérifier'}`);
       }
       const streamResult = await renderJSON(`/stream/${actualType}/${encodeURIComponent(videoId)}.json`);
       const streams = streamResult.body?.streams || [];

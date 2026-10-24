@@ -40,6 +40,7 @@ const args = Object.fromEntries(process.argv.slice(2).map((a) => {
     assert.ok(catalogScore('Death Note', 'Death Note - Saison 1', 'series') > catalogScore('Death Note', 'Death Note', 'series'));
     assert.equal(isMatch('The Matrix', 'A Glitch in the Matrix'), false);
     const { streamCacheKey, parseContentVideoId, uniqueContentPages, extractDirectVideoUrl, unpack, decodePackedVideo } = require('../streams');
+    const { seasonNumberFromTitle, episodeNumberFromKey, episodeCoordinatesFromKey, episodeLabel, filterEpisodeSources } = require('../utils/episodes');
     const packedFixture = `eval(function(p,a,c,k,e,d){return p}('0',10,1,'https://cdn.example.test/video.m3u8'.split('|'),0,{}))`;
     assert.equal(unpack(packedFixture), 'https://cdn.example.test/video.m3u8');
     assert.equal(decodePackedVideo(packedFixture), 'https://cdn.example.test/video.m3u8');
@@ -51,12 +52,34 @@ const args = Object.fromEntries(process.argv.slice(2).map((a) => {
       streamCacheKey('https://site.test/show#ep=1&v=vf', { season: 1, episode: 2 })
     );
     assert.notEqual(
+      streamCacheKey('https://site.test/show#ep=1&v=vf', { season: 0, episode: 1 }),
+      streamCacheKey('https://site.test/show#ep=1&v=vf', { season: 1, episode: 1 })
+    );
+    assert.notEqual(
       streamCacheKey('https://site.test/show#ep=1&v=vf', { season: 1, episode: 1, version: 'vf' }),
       streamCacheKey('https://site.test/show#ep=1&v=vf', { season: 1, episode: 1, version: 'vostfr' })
     );
     assert.deepEqual(parseContentVideoId('fsf:movies:abc123:1:7'), { contentId: 'fsf:movies:abc123', season: 1, episode: 7 });
     assert.deepEqual(parseContentVideoId('fsf:anime:def456:S2E3'), { contentId: 'fsf:anime:def456', season: 2, episode: 3 });
+    assert.deepEqual(parseContentVideoId('fsf:anime:def456:S0E1'), { contentId: 'fsf:anime:def456', season: 0, episode: 1 });
     assert.equal(parseContentVideoId('fsf:anime:def456:bad'), null);
+    assert.equal(seasonNumberFromTitle('One Punch Man - Specials'), 0);
+    assert.equal(seasonNumberFromTitle('L’Attaque des Titans - OAV'), 0);
+    assert.equal(seasonNumberFromTitle('L’Attaque des Titans - Saison 3 - OAV'), 0);
+    assert.equal(seasonNumberFromTitle('Naruto OVA'), 0);
+    assert.equal(seasonNumberFromTitle('Doctor Who Special'), 0);
+    assert.equal(seasonNumberFromTitle('Breaking Bad - Saison 1'), 1);
+    assert.equal(episodeNumberFromKey('0', 0), 1);
+    assert.equal(episodeNumberFromKey('0', 1), 0);
+    assert.deepEqual(episodeCoordinatesFromKey('S00E01', 1), { season: 0, episode: 1 });
+    assert.deepEqual(episodeCoordinatesFromKey('S02E03', 1), { season: 2, episode: 3 });
+    assert.deepEqual(episodeCoordinatesFromKey('OVA 2', 1), { season: 0, episode: 2 });
+    assert.deepEqual(episodeCoordinatesFromKey('4', 2), { season: 2, episode: 4 });
+    assert.equal(episodeLabel(0, 2, 'vf'), 'Spécial 2 (VF)');
+    assert.deepEqual(filterEpisodeSources([
+      { season: 0, episode: 1, url: 'special' },
+      { season: 1, episode: 1, url: 'regular' }
+    ], { season: 0, episode: 1 }).map(source => source.url), ['special']);
     assert.equal(uniqueContentPages([
       { site: 'movies', url: 'https://site.test/show' },
       { site: 'movies', url: 'https://site.test/show#ep=1&v=vf' },

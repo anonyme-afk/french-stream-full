@@ -212,7 +212,7 @@ function cacheFresh(entry, maxAgeMin = 10) {
 
 function streamCacheKey(pageUrl, want = {}) {
   const fragment = String(pageUrl).match(/#ep=(\d+)&v=([a-z]+)/i);
-  return `${String(pageUrl).split('#')[0]}|s${want.season || 1}|e${want.episode ?? 'movie'}|v${want.version || (fragment && fragment[2]) || 'any'}`;
+  return `${String(pageUrl).split('#')[0]}|s${want.season ?? 1}|e${want.episode ?? 'movie'}|v${want.version || (fragment && fragment[2]) || 'any'}`;
 }
 
 function parseContentVideoId(id) {
@@ -272,7 +272,7 @@ async function buildStreams(pages, want, ctx) {
       let list = [];
       if (want.episode != null) {
         const pageBase = p.url.split('#')[0];
-        const res = await ad.sourcesForEpisode(pageBase, want.episode, want.version || null);
+        const res = await ad.sourcesForEpisode(pageBase, want.episode, want.version || null, want.season);
         title = res.title;
         list = res.sources;
       } else {
@@ -292,7 +292,9 @@ async function buildStreams(pages, want, ctx) {
       const resolvePromises = list.slice(0, 8).map(async (s) => {
         const langStr = (s.lang ? s.lang.toUpperCase() : 'FR');
         const hostName = (s.host || p.site || 'Source').toUpperCase();
-        const epTag = s.episode != null ? ` S${s.season || want.season || 1} Ep ${s.episode}` : '';
+        const epTag = s.episode == null ? '' : Number(s.season ?? want.season ?? 1) === 0
+          ? ` Spécial ${s.episode}`
+          : ` S${s.season ?? want.season ?? 1} Ep ${s.episode}`;
         // Le lecteur attend l'origine de la fiche (anime/série), pas son URL à lui-même.
         const sourceReferer = /^https?:\/\//i.test(p.url) ? p.url : ref;
 

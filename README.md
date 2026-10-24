@@ -12,12 +12,14 @@ Chaque partie a demandé un vrai travail de conception, de tests et de correctio
 
 - Nom : `French-Stream-Full`
 - Identifiant stable Stremio : `org.frenchstreamfull.addon`
-- Version du manifeste et du projet : `2.4.4` (2.4.3 avant)
+- Version du manifeste et du projet : `2.4.5` (2.4.4 avant)
 - Types Stremio : `movie`, `series` (les anime sont publiés comme séries)
 - Catalogues : `fsf-movies` et `fsf-series`
 - Logo : `public/logo.png` et `public/logo.svg`
 
 Le manifeste partagé se trouve dans `src/manifest.js` et sert aux deux points d’entrée (`addon.js` et `stream-proxy.js`). Les anime gardent le type Stremio `series` pour que l’application puisse sélectionner une saison et un épisode.
+
+Les épisodes spéciaux sont exposés comme saison 0 dans Stremio. Les clés `S00E01`, `OVA`, `OAV`, `bonus` et les titres de fiches marqués « Specials » sont reconnus pour que la sélection d’un spécial retrouve ses propres sources.
 
 Le domaine films/séries n’est pas figé dans `config/sites.json` : au premier accès, l’add-on suit le lien « Regarder en streaming » publié par la page relais configurée, vérifie que le domaine répond, puis le conserve comme dernière adresse valide avec une durée de cache courte. Si la découverte échoue, il réutilise cette dernière adresse. L’identifiant Stremio et l’adresse du manifeste restent stables ; un changement de domaine source ne demande donc pas de réinstaller l’add-on.
 

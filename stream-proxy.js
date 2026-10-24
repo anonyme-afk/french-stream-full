@@ -197,10 +197,10 @@ builder.defineMetaHandler(async (args) => {
         }
         if (detail && detail.episodes && detail.episodes.length) {
           store.upsertPages(detail.episodes.map(ep => ({
-            url: `${page.url}#ep=${ep.episode}&v=${(ep.version || 'vf').toLowerCase()}`,
+            url: `${page.url}#s=${ep.season ?? 1}&ep=${ep.episode}&v=${(ep.version || 'vf').toLowerCase()}`,
             site: page.site,
             contentId: args.id,
-            season: ep.season || 1,
+            season: ep.season ?? 1,
             episode: ep.episode,
             episodeTitle: ep.title,
             status: 200

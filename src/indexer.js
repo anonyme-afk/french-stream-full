@@ -15,7 +15,7 @@ function indexResult(site, item, type) {
   store.upsertPage({ url: item.url, site, contentId: id, season: item.season ?? null, episode: item.episode ?? null, status: 200 });
   if (item.episodes && item.episodes.length) {
     store.upsertPages(item.episodes.slice(0, 200).map(ep => ({
-      url: `${item.url}#ep=${ep.episode}&v=${(ep.version || 'vf').toLowerCase()}`,
+      url: `${item.url}#s=${ep.season ?? 1}&ep=${ep.episode}&v=${(ep.version || 'vf').toLowerCase()}`,
       site, contentId: id, season: ep.season, episode: ep.episode, episodeTitle: ep.title, status: 200
     })));
   }
