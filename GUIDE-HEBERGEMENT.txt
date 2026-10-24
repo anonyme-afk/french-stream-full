@@ -1,7 +1,7 @@
 HEBERGER FRENCH-STREAM-FULL SUR RENDER
 ======================================
 
-Version actuelle du projet : 2.4.4
+Version actuelle du projet : 2.4.8
 Identifiant Stremio stable : org.frenchstreamfull.addon
 Manifeste : https://french-stream-full.onrender.com/manifest.json
 
@@ -9,11 +9,12 @@ DEPLOIEMENT EXISTANT
   1. Le dépôt GitHub est relie au service Render `french-stream-full`.
   2. Dans Render, ouvre le service > Settings > verifie la branche `main`.
   3. Dans Auto-Deploy, selectionne `On Commit`, puis sauvegarde les reglages.
-  4. Va dans Deploys et lance une fois `Deploy latest commit` pour publier le code deja pousse.
-  5. Pour les prochains changements, un push sur `main` doit lancer le deploiement automatiquement.
-  6. Attends le statut `Live`, puis verifie `/manifest.json` et `/health`.
-  5. Le manifeste doit afficher le nom French-Stream-Full, l'identifiant ci-dessus,
-     la version 2.4.4 et les catalogues `fsf-movies` / `fsf-series`.
+  4. Pour publier la version finale, lance `Deploy latest commit` dans Deploys.
+  5. Attends le statut `Live`, puis verifie `/manifest.json` et `/health`.
+  6. Le manifeste doit afficher le nom French-Stream-Full, l'identifiant ci-dessus,
+     la version 2.4.8 et les catalogues `fsf-movies` / `fsf-series`.
+  7. Pour les commits suivants, verifie dans Events qu'un deploiement automatique
+     a bien ete cree. Si aucun evenement n'apparait, le push n'a pas ete deploye.
 
 CONFIGURATION RENDER
   Le fichier `render.yaml` definit les commandes :
@@ -32,7 +33,8 @@ INSTALLATION DANS STREMIO
 
 VERIFICATION
   Sous Windows, lance `Verifier-les-flux.cmd`. Le rapport local couvre 10 films,
-  10 series et 10 anime, en comparant l'API Render et les adaptateurs locaux.
+  10 series, 10 anime et un controle cible des episodes speciaux de One Punch Man,
+  en comparant l'API Render et les adaptateurs locaux.
   Les donnees du rapport sont ecrites dans `verification-fluxes.txt`.
 
 NOTES

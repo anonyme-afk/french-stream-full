@@ -12,7 +12,7 @@ Chaque partie a demandé un vrai travail de conception, de tests et de correctio
 
 - Nom : `French-Stream-Full`
 - Identifiant stable Stremio : `org.frenchstreamfull.addon`
-- Version du manifeste et du projet : `2.4.7` (2.4.6 avant)
+- Version du manifeste et du projet : `2.4.8`
 - Types Stremio : `movie`, `series` (les anime sont publiés comme séries)
 - Catalogues : `fsf-movies` et `fsf-series`
 - Logo : `public/logo.png` et `public/logo.svg`
@@ -44,7 +44,7 @@ Installe dans Stremio l’adresse `/manifest.json` affichée au démarrage. En l
 npm test
 ```
 
-Ce contrôle vérifie localement les identifiants d’épisodes et la déduplication des fiches, sans contacter les sites externes. Pour le parcours complet, lance `Verifier-les-flux.cmd` sous Windows : il vérifie 10 films, 10 séries et 10 anime, interroge le manifeste/catalogue/métadonnées/flux Render, compare avec les adaptateurs locaux et écrit `verification-fluxes.txt`. Le rapport masque les URL complètes.
+Ce contrôle vérifie localement les identifiants d’épisodes et la déduplication des fiches, sans contacter les sites externes. Pour le parcours complet, lance `Verifier-les-flux.cmd` sous Windows : il vérifie 10 films, 10 séries et 10 anime, interroge le manifeste/catalogue/métadonnées/flux Render, compare avec les adaptateurs locaux, puis contrôle aussi les spéciaux de *One Punch Man* en saison 0. Le rapport masque les URL complètes. Une page de lecteur externe n’est pas comptée comme une lecture directe Stremio ; seule la lecture réelle dans Stremio confirme la compatibilité de bout en bout.
 
 ## Modules principaux
 
@@ -60,6 +60,6 @@ Ce contrôle vérifie localement les identifiants d’épisodes et la déduplica
 
 ## Déploiement Render
 
-Le dépôt contient `render.yaml`, configuré pour la branche `main`, le déclenchement `On Commit`, `npm install` puis `node stream-proxy.js`. Pour un service Render déjà créé, vérifie aussi dans **Settings** que la branche reliée est `main` et que **Auto-Deploy** est réglé sur **On Commit**. Après activation, déploie une fois le dernier commit déjà présent ; les pushes suivants partiront automatiquement. Vérifie les journaux, puis `/manifest.json` et `/health`. Render peut mettre le service gratuit en veille après une période sans requête.
+Le dépôt contient `render.yaml`, configuré pour la branche `main`, le déclenchement `On Commit`, `npm install` puis `node stream-proxy.js`. Pour un service Render déjà créé, vérifie dans **Settings** la branche `main` et **Auto-Deploy : On Commit**. Après un push, vérifie dans **Events** qu’un déploiement a bien été déclenché automatiquement ; si aucun événement n’apparaît, lance **Deploy latest commit**. Vérifie ensuite `/manifest.json` et `/health` : ils doivent afficher la même version que le dépôt. Render peut mettre le service gratuit en veille après une période sans requête.
 
 Pour les étapes de raccordement GitHub et Render, voir [GUIDE-HEBERGEMENT.txt](GUIDE-HEBERGEMENT.txt).

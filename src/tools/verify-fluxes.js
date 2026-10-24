@@ -143,7 +143,7 @@ async function checkRenderStremioFlow({ label, type, catalogId, query, maxEpisod
   }
 }
 
-async function checkTitle({ label, site, query, type, episode }) {
+async function checkTitle({ label, site, query, type, episode, season = null }) {
   const adapter = adapters[site];
   const stats = { searchMs: null, detailMs: null, localEpisodeCount: 0, localSourceCount: 0, assembledStreamCount: 0 };
   report(`\n=== ${label} | recherche « ${query} » ===`);
@@ -168,7 +168,16 @@ async function checkTitle({ label, site, query, type, episode }) {
     stats.localSourceCount = (detail.sources || []).length;
     report(`Étape fiche ${site} : ${stats.detailMs} ms; titre=${detail.title || '(vide)'} type=${detail.type || type} épisodes=${stats.localEpisodeCount} sources=${stats.localSourceCount}`);
 
-    const candidates = (detail.sources || []).filter(s => episode == null || s.episode === episode);
+    const selectedEpisode = episode == null
+      ? null
+      : (detail.episodes || []).find((item) => Number(item.episode) === Number(episode)
+        && (season == null || Number(item.season ?? 1) === Number(season)));
+    const selectedSeason = season ?? selectedEpisode?.season ?? 1;
+    if (selectedEpisode) {
+      report(`  Épisode retenu : saison ${selectedSeason}, épisode ${episode} (${selectedEpisode.title || 'sans titre'})`);
+    }
+    const candidates = (detail.sources || []).filter(s => episode == null
+      || (Number(s.episode) === Number(episode) && Number(s.season ?? 1) === Number(selectedSeason)));
     const seenHosts = new Set();
     const perHost = candidates.filter((source) => {
       const key = source.host || hostOf(source.url);
@@ -179,7 +188,7 @@ async function checkTitle({ label, site, query, type, episode }) {
     for (const source of perHost) report(`  Source ${redact(source.host || hostOf(source.url))} (${source.lang || source.version || 'langue inconnue'})`);
     if (!perHost.length) report('  Aucune source déclarée pour cet épisode/film.');
 
-    const want = { season: 1, episode, version: null };
+    const want = { season: selectedSeason, episode, version: null };
     const assembleStartedAt = Date.now();
     const streams = await buildStreams([{ url: item.url, site }], want, { adapters, SITES });
     const assembleMs = Date.now() - assembleStartedAt;
@@ -240,6 +249,15 @@ async function checkTitle({ label, site, query, type, episode }) {
     total.localSources += local.localSourceCount;
     total.localStreams += local.assembledStreamCount;
   }
+  report('\n=== VÉRIFICATION CIBLÉE DES SPÉCIAUX ===');
+  await checkRenderStremioFlow({
+    label: 'ANIME SPÉCIAUX', type: 'series', catalogId: 'fsf-series',
+    query: 'One Punch Man', maxEpisodes: 6
+  });
+  await checkTitle({
+    label: 'ANIME SPÉCIAUX', site: 'anime', query: 'One Punch Man',
+    type: 'series', episode: 1, season: 0
+  });
   report('\n=== SYNTHÈSE 30 CAS ===');
   for (const [type, total] of Object.entries(totals)) {
     report(`${type}: ${total.tested} test(s), ${total.results} résultat(s) catalogue Render, ${total.episodes} épisode(s), ${total.direct} flux directs / ${total.external} pages externes Render, médias accessibles ${total.probeOk}/${total.probeOk + total.probeFail}, ${total.localSources} source(s) trouvée(s) localement, ${total.localStreams} flux assemblé(s) localement, ${total.errors} erreur(s) API/type/titre Render`);
