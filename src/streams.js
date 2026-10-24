@@ -145,6 +145,16 @@ function streamCacheKey(pageUrl, want = {}) {
   return `${String(pageUrl).split('#')[0]}|s${want.season || 1}|e${want.episode ?? 'movie'}|v${want.version || (fragment && fragment[2]) || 'any'}`;
 }
 
+function parseContentVideoId(id) {
+  const match = String(id).match(/^(fsf:[^:]+:[^:]+)(?::S(\d+)E(\d+)|:(\d+):(\d+))?$/i);
+  if (!match) return null;
+  return {
+    contentId: match[1],
+    season: Number.parseInt(match[2] || match[4] || '1', 10),
+    episode: match[3] || match[5] ? Number.parseInt(match[3] || match[5], 10) : null
+  };
+}
+
 // ──────────────────────────────────────────────
 //  Build streams — PARALLEL + filtered
 // ──────────────────────────────────────────────
@@ -266,4 +276,4 @@ async function buildStreams(pages, want, ctx) {
   });
 }
 
-module.exports = { buildStreams, resolveDirectStream, streamCacheKey };
+module.exports = { buildStreams, resolveDirectStream, streamCacheKey, parseContentVideoId };

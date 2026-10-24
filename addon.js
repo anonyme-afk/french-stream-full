@@ -23,7 +23,7 @@ const { MovieSeriesAdapter } = require('./src/adapters/movies');
 const { score, isMatch } = require('./src/utils/normalize');
 const { fetchText } = require('./src/http');
 const log = require('./src/logger');
-const { buildStreams, resolveDirectStream } = require('./src/streams');
+const { buildStreams, resolveDirectStream, parseContentVideoId } = require('./src/streams');
 
 const SITES = loadSites();
 const adapters = {};
@@ -217,7 +217,7 @@ builder.defineMetaHandler(async (args) => {
       if (seen.has(key)) continue;
       seen.add(key);
       meta.videos.push({
-        id: `${args.id}:S${e.season}E${e.episode}`,
+        id: `${args.id}:${e.season}:${e.episode}`,
         title: e.title || `Episode ${e.episode}`,
         season: e.season,
         episode: e.episode
@@ -260,11 +260,9 @@ builder.defineStreamHandler(async (args) => {
   }
 
   // Cas B : ID natif FSF (fsf:anime:hash ou fsf:anime:hash:S1E2)
-  const m = String(args.id).match(/^(fsf:[^:]+:[^:]+)(?::S(\d+)E(\d+))?$/);
-  if (!m) return { streams: [] };
-  const contentId = m[1];
-  const season = m[2] ? parseInt(m[2], 10) : 1;
-  const episode = m[3] ? parseInt(m[3], 10) : null;
+  const video = parseContentVideoId(args.id);
+  if (!video) return { streams: [] };
+  const { contentId, season, episode } = video;
   const pages = pagesForContent(contentId);
   if (!pages.length) return { streams: [] };
   const streams = await buildStreams(pages, { season, episode, version: null }, { adapters, SITES });
