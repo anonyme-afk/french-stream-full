@@ -192,13 +192,18 @@ builder.defineMetaHandler(async (args) => {
   const pages = pagesForContent(args.id);
   let eps = store.episodesFor(args.id);
 
-  // Si c'est une serie et qu'aucun episode n'est en cache, on extrait la fiche maintenant
-  if (meta.type === 'series' && (!eps || !eps.length) && pages.length) {
+  // Vérifie le type réel des fiches ambiguës (les résultats DLE peuvent contenir films et séries).
+  if (pages.length && (meta.type === 'movie' || (meta.type === 'series' && (!eps || !eps.length)))) {
     const page = pages[0];
     const ad = adapters[page.site];
     if (ad) {
       try {
         const detail = await ad.extractContent(page.url);
+        if (detail && (detail.type === 'movie' || detail.type === 'series') && detail.type !== meta.type) {
+          row.type = detail.type;
+          meta.type = detail.type;
+          store.upsertContent({ ...row, type: detail.type });
+        }
         if (detail && detail.episodes && detail.episodes.length) {
           for (const ep of detail.episodes) {
             store.upsertPage({
