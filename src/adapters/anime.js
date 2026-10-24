@@ -23,7 +23,8 @@ class AnimeAdapter extends DleAdapter {
     if (!r.ok) throw new Error('HTTP ' + r.status + ' sur ' + pageUrl);
     const h = r.text;
     // newsId : data-news-id OU digits du slug
-    let newsId = (h.match(/data-news-id="(\d+)"/i) || h.match(/dataset\.newsId[^0-9]*(\d+)/))[1] || null;
+    const newsIdMatch = h.match(/data-news-id="(\d+)"/i) || h.match(/dataset\.newsId[^0-9]*(\d+)/);
+    let newsId = newsIdMatch ? newsIdMatch[1] : null;
     if (!newsId) newsId = this.newsId(pageUrl);
     const title = decode((h.match(/<h1[^>]*>([\s\S]{1,200}?)<\/h1>/i) || [])[1]?.replace(/<[^>]+>/g, '') || '')
       || meta(h, 'og:title') || decode((h.match(/<title>([\s\S]{1,150}?)<\/title>/i) || [])[1] || '').split(/[-|–]/)[0].trim();

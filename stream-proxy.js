@@ -4,7 +4,8 @@
 // French Stream Full Proxy — v2.1.0 (fusion catalogue + proxy réseau)
 // ═════════════════════════════════════════════════════════════════════════════
 
-const { addonBuilder, getRouter, landingTemplate } = require('stremio-addon-sdk');
+const { addonBuilder, getRouter } = require('stremio-addon-sdk');
+const landingTemplate = require('stremio-addon-sdk/src/landingTemplate');
 const path = require('path');
 const express = require('express');
 const { buildStreams, resolveDirectStream } = require('./src/streams.js');
@@ -139,17 +140,18 @@ async function seedCatalog() {
 // ══════════════════════════════════════════════════════════════════════════════
 
 const builder = new addonBuilder({
-  id: 'org.myaddon.proxyresolver',
+  id: 'org.frenchstreamfull.addon',
   version: '2.1.0',
-  name: 'French Stream Full Proxy',
-  description: 'Films, séries, animes VF/VOSTFR avec proxy d\'en-têtes réseau stabilisé.',
+  name: 'French-Stream-Full',
+  description: 'Films, séries et animes VF/VOSTFR — French-Stream + French-Manga.',
+  logo: `${process.env.BASE_URL || 'https://french-stream-full.onrender.com'}/logo.png`,
+  background: `${process.env.BASE_URL || 'https://french-stream-full.onrender.com'}/logo.png`,
   resources: ['catalog', 'meta', 'stream'],
-  types: ['movie', 'series', 'anime'],
+  types: ['movie', 'series'],
   idPrefixes: ['fsf:', 'tt'],
   catalogs: [
-    { type: 'movie', id: 'fs_movies', name: 'French Stream - Films' },
-    { type: 'series', id: 'fs_series', name: 'French Stream - Séries' },
-    { type: 'anime', id: 'fs_anime', name: 'French Manga - Animes' }
+    { type: 'movie', id: 'fsf-movies', name: 'FSF Films', extra: [{ name: 'search', isRequired: false }] },
+    { type: 'series', id: 'fsf-series', name: 'FSF Séries & Animes', extra: [{ name: 'search', isRequired: false }] }
   ]
 });
 // ══════════════════════════════════════════════════════════════════════════════
@@ -245,21 +247,14 @@ builder.defineMetaHandler(async (args) => {
 // STREAM HANDLER (logique dynamique corrigée avec proxy réseau)
 // ══════════════════════════════════════════════════════════════════════════════
 
-const PROXY_HEADERS = {
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
-  'Accept': '*/*',
-  'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.8'
-};
-
 function streamResult(streams) {
-  return {
-    streams,
-    behaviorHints: { notWebReady: true },
-    proxyHeaders: PROXY_HEADERS
-  };
+  return { streams };
 }
 
 builder.defineStreamHandler(async (args) => {
+  const cached = getCachedResolution(args.id);
+  if (cached) return cached;
+
   // Cas A : ID Cinemeta (tt0172495 ou tt0903747:1:2)
   if (String(args.id).startsWith('tt')) {
     try {
@@ -306,10 +301,29 @@ builder.defineStreamHandler(async (args) => {
 // DÉMARRAGE DU SERVEUR (SDK Stremio)
 // ══════════════════════════════════════════════════════════════════════════════
 
-serveHTTP(builder.getInterface(), { port: process.env.PORT || 3000 });
+const addonInterface = builder.getInterface();
+const app = express();
+const PORT = Number(process.env.PORT) || 3000;
+const publicDir = path.join(__dirname, 'public');
 
-console.log(`\n════════════════════════════════════════════════════════════════════════════════`);
-console.log(`  French Stream Full Proxy v2.1.0`);
-console.log(`  Manifest : http://127.0.0.1:${process.env.PORT || 3000}/manifest.json`);
-console.log(`  Port     : ${process.env.PORT || 3000}`);
-console.log(`════════════════════════════════════════════════════════════════════════════════\n`);
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Headers', '*');
+  next();
+});
+app.use(express.static(publicDir, { maxAge: '1d' }));
+app.use(getRouter(addonInterface));
+
+const landingHTML = landingTemplate(addonInterface.manifest);
+app.get('/', (req, res) => {
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.end(landingHTML);
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`\n════════════════════════════════════════════════════════════════════════════════`);
+  console.log(`  French Stream Full Proxy v2.1.0`);
+  console.log(`  Manifest : http://127.0.0.1:${PORT}/manifest.json`);
+  console.log(`  Port     : ${PORT}`);
+  console.log(`════════════════════════════════════════════════════════════════════════════════\n`);
+});

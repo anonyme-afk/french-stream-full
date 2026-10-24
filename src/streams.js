@@ -89,9 +89,9 @@ function extractDirectVideoUrl(html) {
   return null;
 }
 
-async function resolveDirectStream(url) {
+async function resolveDirectStream(url, pageReferer) {
   try {
-    const referer = /french-manga|vidzy/i.test(url) ? 'https://w16.french-manga.net/' : 'https://fs26.lol/';
+    const referer = pageReferer || (/french-manga|vidzy/i.test(url) ? 'https://w16.french-manga.net/' : 'https://fs26.lol/');
     const opts = { headers: { Referer: referer }, timeout: 4500, retries: 0 };
 
     if (/uqload\./i.test(url)) {
@@ -119,7 +119,7 @@ async function resolveDirectStream(url) {
     }
 
     // Generic : si on n'a pas de decoder spécifique, on tente l'extraction directe
-    if (/voe\.|dood\.|streamtape\.|filemoon\.|vidoza\.|netu\./i.test(url)) {
+    if (/voe\.|dood\.|streamtape\.|filemoon\.|vidoza\.|netu\.|luluvid\.|vidhsareup\./i.test(url)) {
       const r = await fetchText(url, opts);
       if (r.ok && r.text) {
         const u = extractDirectVideoUrl(r.text);
@@ -140,7 +140,10 @@ function cacheFresh(entry, maxAgeMin = 10) {
   return entry.ok ? entry : { ...entry, stale: true };
 }
 
-const PUBLIC_BASE = process.env.BASE_URL || 'https://french-stream-full.onrender.com';
+function streamCacheKey(pageUrl, want = {}) {
+  const fragment = String(pageUrl).match(/#ep=(\d+)&v=([a-z]+)/i);
+  return `${String(pageUrl).split('#')[0]}|s${want.season || 1}|e${want.episode ?? 'movie'}|v${want.version || (fragment && fragment[2]) || 'any'}`;
+}
 
 // ──────────────────────────────────────────────
 //  Build streams — PARALLEL + filtered
@@ -159,7 +162,9 @@ async function buildStreams(pages, want, ctx) {
   for (const p of pages.slice(0, 3)) {
     if (timeLeft() < 2500) break;
     try {
-      const cached = cacheFresh(store.getCache(p.url), cacheMinutes);
+      const fragment = p.url.match(/#ep=(\d+)&v=([a-z]+)/i);
+      const cacheKey = streamCacheKey(p.url, want);
+      const cached = cacheFresh(store.getCache(cacheKey), cacheMinutes);
       if (cached && !cached.stale && cached.items) {
         for (const it of cached.items) streams.push(it);
         continue;
@@ -170,9 +175,8 @@ async function buildStreams(pages, want, ctx) {
       let title = '';
       let list = [];
       if (want.episode != null) {
-        const frag = p.url.match(/#ep=(\d+)&v=([a-z]+)/);
         const pageBase = p.url.split('#')[0];
-        const res = await ad.sourcesForEpisode(pageBase, want.episode, want.version || (frag && frag[2]) || null);
+        const res = await ad.sourcesForEpisode(pageBase, want.episode, want.version || (fragment && fragment[2]) || null);
         title = res.title;
         list = res.sources;
       } else {
@@ -193,21 +197,40 @@ async function buildStreams(pages, want, ctx) {
         const langStr = (s.lang ? s.lang.toUpperCase() : 'FR');
         const hostName = (s.host || p.site || 'Source').toUpperCase();
         const epTag = s.episode != null ? ` Ep ${s.episode}` : '';
+        const sourceReferer = /^https?:\/\//i.test(s.url) ? s.url : ref;
 
         try {
-          const direct = await resolveDirectStream(s.url);
+          const direct = await resolveDirectStream(s.url, sourceReferer);
           if (direct && direct.url) {
-            const probe = await probeStream(direct.url, ref);
+            const probe = await probeStream(direct.url, sourceReferer);
             if (probe.isTooSmall) {
               log.warn(p.site, 'stream-filter', `Filtre dummy: ${direct.url} (${probe.reason || ''})`);
               return null;
             }
-            if (!probe.compatible) return null;
+            if (probe.compatible) {
+              return {
+                name: `FSF [${langStr}]`,
+                title: `${title}${epTag}\n${hostName} • ${s.quality || 'HD'} (Direct)`,
+                url: probe.variantUrl || direct.url,
+                behaviorHints: {
+                  notWebReady: true,
+                  proxyHeaders: {
+                    request: {
+                      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36',
+                      Referer: sourceReferer
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+          // A player page is a valid Stremio external link, but not a direct video stream.
+          if (s.isIframe || /(?:vidzy|vidhsareup|luluvid|fsvid|uqload|voe|dood|streamtape|filemoon|vidoza|netu)\./i.test(s.url)) {
             return {
               name: `FSF [${langStr}]`,
-              title: `${title}${epTag}\n${hostName} • ${s.quality || 'HD'} (Direct)`,
-              url: probe.variantUrl || direct.url,
-              behaviorHints: { notWebReady: false }
+              title: `${title}${epTag}\n${hostName} • Ouvrir le lecteur externe`,
+              externalUrl: s.url
             };
           }
         } catch (e) {
@@ -225,7 +248,7 @@ async function buildStreams(pages, want, ctx) {
         }
       }
 
-      store.setCache(p.url, { ok: items.length > 0, items });
+      store.setCache(cacheKey, { ok: items.length > 0, items });
       for (const it of items) streams.push(it);
     } catch (e) {
       log.error(p.site, 'stream', String(e).slice(0, 300), { page: p.url });
@@ -236,11 +259,11 @@ async function buildStreams(pages, want, ctx) {
   // Deduplique finale par URL de stream
   const seen = new Set();
   return streams.filter((s) => {
-    const k = s.url;
+    const k = s.url || s.externalUrl;
     if (!k || seen.has(k)) return false;
     seen.add(k);
     return true;
   });
 }
 
-module.exports = { buildStreams, resolveDirectStream };
+module.exports = { buildStreams, resolveDirectStream, streamCacheKey };

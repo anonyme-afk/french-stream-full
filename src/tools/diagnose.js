@@ -15,6 +15,7 @@ const args = Object.fromEntries(process.argv.slice(2).map((a) => {
 
 (async () => {
   if (args.selftest) {
+    const assert = require('node:assert/strict');
     const { norm, isMatch, parseSeasonEpisode } = require('../utils/normalize');
     console.log('norm =', norm("L'Attaque des Titans"));
     console.log('score naruto =', score('naruto', 'Naruto Shippuden Kai - Saison 1').toFixed(2));
@@ -24,6 +25,21 @@ const args = Object.fromEntries(process.argv.slice(2).map((a) => {
     const sample = `<div class='search-item' onclick="location.href='/1498756-naruto-test-2025.html'"><div class='search-poster'><img src='https://image.tmdb.org/t/p/w500/x.jpg' alt='Naruto Test' loading='lazy'></div><div class='search-info'><div class='search-title'>Naruto Test (2025)</div></div></div>`;
     const dle = new DleAdapter('test', { baseUrl: 'https://x.test' });
     console.log('parse-search-items =', dle.parseSearchItems(sample).length + ' items (attendu: 1)');
+    assert.equal(dle.parseSearchItems(sample).length, 1);
+    const { streamCacheKey } = require('../streams');
+    assert.notEqual(
+      streamCacheKey('https://site.test/show#ep=1&v=vf', { season: 1, episode: 1 }),
+      streamCacheKey('https://site.test/show#ep=1&v=vf', { season: 1, episode: 2 })
+    );
+    assert.notEqual(
+      streamCacheKey('https://site.test/show#ep=1&v=vf', { season: 1, episode: 1, version: 'vf' }),
+      streamCacheKey('https://site.test/show#ep=1&v=vf', { season: 1, episode: 1, version: 'vostfr' })
+    );
+    const { addonBuilder } = require('stremio-addon-sdk');
+    const manifestBuilder = new addonBuilder({ id: 'test.addon', version: '1.0.0', name: 'test', description: 'test', resources: ['stream'], types: ['movie', 'series'], catalogs: [] });
+    manifestBuilder.defineStreamHandler(() => ({ streams: [] }));
+    assert.deepEqual(manifestBuilder.getInterface().manifest.types, ['movie', 'series']);
+    console.log('stream-cache-key = episodes and versions separated');
     console.log('SELFTEST OK');
     return;
   }
