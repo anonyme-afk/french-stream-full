@@ -65,19 +65,23 @@ async function checkRenderStremioFlow({ label, type, catalogId, query }) {
     report(`Métadonnées Render : HTTP ${metaResult.status}, ${meta?.videos?.length || 0} épisode(s)`);
     if (!meta) return;
 
-    const video = meta.videos?.[0];
-    const videoId = video?.id || selected.id;
-    if (video) report(`  Épisode demandé : saison ${video.season || 1}, épisode ${video.episode || 1}`);
-    const streamResult = await renderJSON(`/stream/${type}/${encodeURIComponent(videoId)}.json`);
-    const streams = streamResult.body?.streams || [];
-    report(`Réponse flux Render : HTTP ${streamResult.status}, ${streams.length} source(s)`);
-    for (const stream of streams.slice(0, 6)) {
-      if (stream.url) {
-        report(`  Directe : ${hostOf(stream.url)}; en-têtes Stremio ${stream.behaviorHints?.proxyHeaders?.request ? 'présents' : 'absents'}`);
-      } else if (stream.externalUrl) {
-        report(`  Page externe : ${hostOf(stream.externalUrl)} (pas une lecture intégrée)`);
-      } else {
-        report('  Réponse sans URL vidéo reconnue.');
+    const videos = meta.videos?.length ? meta.videos.slice(0, type === 'series' ? 3 : 1) : [{ id: selected.id }];
+    for (const video of videos) {
+      const videoId = video.id;
+      if (video.season != null || video.episode != null) {
+        report(`  Sélection saison ${video.season || 1}, épisode ${video.episode || 1} — ID ${/:\d+:\d+$/.test(videoId) ? 'canonique' : 'à vérifier'}`);
+      }
+      const streamResult = await renderJSON(`/stream/${type}/${encodeURIComponent(videoId)}.json`);
+      const streams = streamResult.body?.streams || [];
+      report(`    Flux Render : HTTP ${streamResult.status}, ${streams.length} source(s)`);
+      for (const stream of streams.slice(0, 4)) {
+        if (stream.url) {
+          report(`      Directe : ${hostOf(stream.url)}; en-têtes Stremio ${stream.behaviorHints?.proxyHeaders?.request ? 'présents' : 'absents'}`);
+        } else if (stream.externalUrl) {
+          report(`      Page externe : ${hostOf(stream.externalUrl)} (pas une lecture intégrée)`);
+        } else {
+          report('      Réponse sans URL vidéo reconnue.');
+        }
       }
     }
   } catch (error) {
