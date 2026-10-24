@@ -7,6 +7,7 @@ const { loadSites } = require('../config');
 const { AnimeAdapter } = require('../adapters/anime');
 const { MovieSeriesAdapter } = require('../adapters/movies');
 const { buildStreams } = require('../streams');
+const { probeStream } = require('../probe');
 
 const SITES = loadSites();
 const adapters = {
@@ -35,6 +36,9 @@ async function checkRender() {
     report(`  id=${manifest.id || '(absent)'} version=${manifest.version || '(absente)'}`);
     report(`  types=${(manifest.types || []).join(', ')}`);
     report(`  catalogues=${(manifest.catalogs || []).map(c => `${c.type}:${c.id}`).join(', ')}`);
+    if (manifest.id !== 'org.frenchstreamfull.addon') {
+      report('  ATTENTION : Render sert encore un ancien manifeste; Stremio n’utilise pas le code poussé récemment.');
+    }
   } catch (error) {
     report(`  inaccessible (${error.name || 'erreur réseau'})`);
   }
@@ -72,10 +76,25 @@ async function checkTitle({ label, site, query, type, episode }) {
     const want = { season: 1, episode, version: null };
     const streams = await buildStreams([{ url: item.url, site }], want, { adapters, SITES });
     report(`Réponse assemblée pour Stremio : ${streams.length} source(s)`);
+    let directChecks = 0;
     for (const stream of streams) {
-      const kind = stream.url ? `directe (${hostOf(stream.url)})` : `lecteur externe (${hostOf(stream.externalUrl)})`;
-      const validShape = Boolean(stream.url || stream.externalUrl || stream.ytId || stream.infoHash);
-      report(`  ${validShape ? 'format accepté' : 'format incomplet'} — ${kind} — ${stream.name || 'sans nom'}`);
+      if (stream.url) {
+        const referer = stream.behaviorHints?.proxyHeaders?.request?.Referer;
+        report(`  URL média Stremio — ${hostOf(stream.url)} — en-têtes ${referer ? 'présents' : 'absents'}`);
+        if (directChecks < 2) {
+          directChecks++;
+          try {
+            const probe = await probeStream(stream.url, referer);
+            report(`    contrôle depuis ce PC : HTTP ${probe.status || 0}, ${probe.contentType || 'type inconnu'}, ${probe.compatible ? 'compatible' : 'incompatible'}${probe.reason ? ` (${probe.reason})` : ''}`);
+          } catch (error) {
+            report(`    contrôle média en échec : ${error.name || 'erreur réseau'}`);
+          }
+        }
+      } else if (stream.externalUrl) {
+        report(`  Lien de lecteur externe — ${hostOf(stream.externalUrl)} (ce n’est pas un flux lu directement dans Stremio)`);
+      } else {
+        report('  Source sans URL média ni lien externe reconnu.');
+      }
     }
     if (!streams.length) report('  Rien ne prouve encore qu’un flux soit lisible. Vérifie la lecture dans Stremio après installation locale.');
   } catch (error) {
@@ -86,9 +105,12 @@ async function checkTitle({ label, site, query, type, episode }) {
 (async () => {
   report('Vérification locale French-Stream-Full — aucun jeton ni URL complète ne sera écrit dans ce rapport.');
   await checkRender();
-  await checkTitle({ label: 'SÉRIE', site: 'movies', query: 'Breaking Bad', type: 'series', episode: 1 });
-  await checkTitle({ label: 'FILM', site: 'movies', query: 'Avengers', type: 'movie', episode: null });
-  await checkTitle({ label: 'ANIME', site: 'anime', query: 'Naruto', type: 'series', episode: 1 });
+  await checkTitle({ label: 'SÉRIE A', site: 'movies', query: 'Breaking Bad', type: 'series', episode: 1 });
+  await checkTitle({ label: 'SÉRIE B', site: 'movies', query: 'Game of Thrones', type: 'series', episode: 1 });
+  await checkTitle({ label: 'FILM A', site: 'movies', query: 'Avengers', type: 'movie', episode: null });
+  await checkTitle({ label: 'FILM B', site: 'movies', query: 'Dune', type: 'movie', episode: null });
+  await checkTitle({ label: 'ANIME A', site: 'anime', query: 'Naruto', type: 'series', episode: 1 });
+  await checkTitle({ label: 'ANIME B', site: 'anime', query: 'One Piece', type: 'series', episode: 1 });
   report('\nFin. Le rapport distingue les sources annoncées par le site et les sources réellement retournées à Stremio.');
 })().catch((error) => {
   report(`Erreur générale : ${error.name || 'erreur'} — ${redact(error.message || String(error)).slice(0, 220)}`);
