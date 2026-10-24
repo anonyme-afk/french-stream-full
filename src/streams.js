@@ -76,7 +76,7 @@ function unpack(packed) {
 }
 
 function decodePackedVideo(html) {
-  const pattern = /eval\(function\(p,a,c,k,e,d\)[\s\S]{0,30000}?return\s+p\s*\}\s*\([\s\S]{0,200000}?\)\)/gi;
+  const pattern = /eval\s*\(\s*function\s*\(\s*p\s*,\s*a\s*,\s*c\s*,\s*k\s*,\s*e\s*,\s*d\s*\)[\s\S]{0,30000}?return\s+p\s*\}\s*\([\s\S]{0,200000}?\)\s*\)/gi;
   for (const match of String(html || '').matchAll(pattern)) {
     const decoded = unpack(match[0]);
     const mediaUrl = decoded && extractDirectVideoUrl(decoded);

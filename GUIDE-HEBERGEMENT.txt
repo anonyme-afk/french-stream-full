@@ -1,7 +1,7 @@
 HEBERGER FRENCH-STREAM-FULL SUR RENDER
 ======================================
 
-Version actuelle du projet : 2.4.3
+Version actuelle du projet : 2.4.4
 Identifiant Stremio stable : org.frenchstreamfull.addon
 Manifeste : https://french-stream-full.onrender.com/manifest.json
 
@@ -13,7 +13,7 @@ DEPLOIEMENT EXISTANT
   5. Pour les prochains changements, un push sur `main` doit lancer le deploiement automatiquement.
   6. Attends le statut `Live`, puis verifie `/manifest.json` et `/health`.
   5. Le manifeste doit afficher le nom French-Stream-Full, l'identifiant ci-dessus,
-     la version 2.4.3 et les catalogues `fsf-movies` / `fsf-series`.
+     la version 2.4.4 et les catalogues `fsf-movies` / `fsf-series`.
 
 CONFIGURATION RENDER
   Le fichier `render.yaml` definit les commandes :
