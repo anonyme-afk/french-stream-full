@@ -324,14 +324,14 @@ async function buildStreams(pages, want, ctx) {
             }
           }
 
-          // A player page is a valid Stremio external link, but not a direct video stream.
-          if (s.isIframe || /(?:vidzy|vidhsareup|luluvid|fsvid|uqload|voe|dood|streamtape|filemoon|vidoza|netu)\./i.test(s.url)) {
-            return {
-              name: `FSF [${langStr}]`,
-              title: `${title}${epTag}\n${hostName} • Ouvrir le lecteur externe`,
-              externalUrl: s.url
-            };
-          }
+          // Si le flux direct n'est pas résolu ou pas compatible, on retourne
+          // externalUrl pour que Stremio puisse tenter d'ouvrir la page de lecteur.
+          return {
+            name: `FSF [${langStr}]`,
+            title: `${title}${epTag}\n${hostName} • ${s.quality || 'HD'} (Lecteur)`,
+            externalUrl: s.url,
+            behaviorHints: { notWebReady: true }
+          };
         } catch (e) {
           log.warn(p.site, 'resolve', `Fail ${s.url}: ${String(e).slice(0, 100)}`);
         }

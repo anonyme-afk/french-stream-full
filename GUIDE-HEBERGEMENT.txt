@@ -1,7 +1,7 @@
 HEBERGER FRENCH-STREAM-FULL SUR RENDER
 ======================================
 
-Version actuelle du projet : 2.4.9
+Version actuelle du projet : 2.4.10
 Identifiant Stremio stable : org.frenchstreamfull.addon
 Manifeste : https://french-stream-full.onrender.com/manifest.json
 
@@ -12,7 +12,7 @@ DEPLOIEMENT EXISTANT
   4. Pour publier la version finale, lance `Deploy latest commit` dans Deploys.
   5. Attends le statut `Live`, puis verifie `/manifest.json` et `/health`.
   6. Le manifeste doit afficher le nom French-Stream-Full, l'identifiant ci-dessus,
-     la version 2.4.9 et les catalogues `fsf-movies` / `fsf-series`.
+     la version 2.4.10 et les catalogues `fsf-movies` / `fsf-series`.
   7. Pour les commits suivants, verifie dans Events qu'un deploiement automatique
      a bien ete cree. Si aucun evenement n'apparait, le push n'a pas ete deploye.
 

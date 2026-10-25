@@ -9,7 +9,7 @@ const { MovieSeriesAdapter } = require('../adapters/movies');
 const { buildStreams } = require('../streams');
 const { probeStream } = require('../probe');
 const { ADDON_ID, ADDON_VERSION } = require('../manifest');
-const { score, isMatch } = require('../utils/normalize');
+const { score, catalogScore, isMatch } = require('../utils/normalize');
 const { discoverMovieSeriesBase } = require('../site-discovery');
 
 const SITES = loadSites();
@@ -62,7 +62,7 @@ async function renderJSON(path) {
   return { status: response.status, body, elapsedMs: Date.now() - startedAt };
 }
 
-async function checkRenderStremioFlow({ label, type, catalogId, query, maxEpisodes = 1 }) {
+async function checkRenderStremioFlow({ label, type, catalogId, query, maxEpisodes = 1, expectedTitleIncludes = null, expectedSeason = null }) {
   report(`\n--- CHAÎNE API RENDER / STREMIO : ${label} (« ${query} ») ---`);
   const stats = { label, query, catalogMs: null, metaMs: null, streamMs: 0, catalogCount: 0, episodeCount: 0, streamCount: 0, directCount: 0, externalCount: 0, directProbeOk: 0, directProbeFail: 0, titleMismatch: 0, typeMismatch: 0, errors: 0 };
   try {
@@ -73,7 +73,14 @@ async function checkRenderStremioFlow({ label, type, catalogId, query, maxEpisod
     report(`Catalogue Render : HTTP ${catalog.status}, ${metas.length} résultat(s), ${catalog.elapsedMs} ms`);
     if (catalog.status >= 400 || !metas.length) { stats.errors++; return stats; }
 
-    const selected = metas[0];
+    const selected = expectedTitleIncludes
+      ? metas.find(item => String(item.name || '').toLowerCase().includes(expectedTitleIncludes.toLowerCase()))
+      : metas[0];
+    if (!selected) {
+      stats.errors++;
+      report(`  ERREUR : aucun résultat ne contient « ${expectedTitleIncludes} ».`);
+      return stats;
+    }
     const selectedTitle = selected.name || '';
     const titleScore = score(query, selectedTitle);
     report(`  Élément reçu : ${selectedTitle || '(sans titre)'} (${selected.type || type}), correspondance titre ${titleScore.toFixed(2)}`);
@@ -95,7 +102,16 @@ async function checkRenderStremioFlow({ label, type, catalogId, query, maxEpisod
       stats.errors++;
       report(`  ERREUR : le catalogue ${type} a renvoyé une fiche de type ${actualType}.`);
     }
-    const videos = meta.videos?.length ? meta.videos.slice(0, maxEpisodes) : [{ id: selected.id }];
+    const allVideos = meta.videos?.length ? meta.videos : [];
+    if (expectedSeason != null && !allVideos.some(video => Number(video.season) === Number(expectedSeason))) {
+      stats.errors++;
+      report(`  ERREUR : aucune vidéo de la saison ${expectedSeason} n’est exposée pour cette fiche.`);
+      return stats;
+    }
+    const matchingVideos = expectedSeason == null
+      ? allVideos
+      : allVideos.filter(video => Number(video.season) === Number(expectedSeason));
+    const videos = matchingVideos.length ? matchingVideos.slice(0, maxEpisodes) : [{ id: selected.id }];
     for (const video of videos) {
       const videoId = video.id;
       let directProbed = false;
@@ -156,9 +172,19 @@ async function checkTitle({ label, site, query, type, episode, season = null }) 
     let startedAt = Date.now();
     const found = await adapter.search(query);
     stats.searchMs = Date.now() - startedAt;
-    report(`Étape recherche ${site} : ${stats.searchMs} ms, ${found.length} résultat(s)`);
-    const item = found[0];
-    if (!item) return stats;
+    const ranked = found
+      .map(item => ({ item, rank: catalogScore(query, item.title, type, { candYear: item.year }) }))
+      .filter(({ item }) => isMatch(query, item.title, { candYear: item.year }))
+      .filter(({ item }) => !expectedTitleIncludes || String(item.title || '').toLowerCase().includes(expectedTitleIncludes.toLowerCase()))
+      .sort((a, b) => b.rank - a.rank);
+    report(`Étape recherche ${site} : ${stats.searchMs} ms, ${found.length} résultat(s), ${ranked.length} résultat(s) retenu(s) après le tri de l’add-on`);
+    const item = ranked[0]?.item;
+    if (!item) {
+      report(expectedTitleIncludes
+        ? `Aucun résultat exploitable avec « ${expectedTitleIncludes} » dans le titre.`
+        : 'Aucun résultat ne passe le filtre de correspondance de l’add-on.');
+      return stats;
+    }
     report(`Premier résultat : ${item.title}`);
 
     startedAt = Date.now();
@@ -252,11 +278,12 @@ async function checkTitle({ label, site, query, type, episode, season = null }) 
   report('\n=== VÉRIFICATION CIBLÉE DES SPÉCIAUX ===');
   await checkRenderStremioFlow({
     label: 'ANIME SPÉCIAUX', type: 'series', catalogId: 'fsf-series',
-    query: 'One Punch Man', maxEpisodes: 6
+    query: 'One Punch Man', maxEpisodes: 6,
+    expectedTitleIncludes: 'special', expectedSeason: 0
   });
   await checkTitle({
     label: 'ANIME SPÉCIAUX', site: 'anime', query: 'One Punch Man',
-    type: 'series', episode: 1, season: 0
+    type: 'series', episode: 1, season: 0, expectedTitleIncludes: 'special'
   });
   report('\n=== SYNTHÈSE 30 CAS ===');
   for (const [type, total] of Object.entries(totals)) {

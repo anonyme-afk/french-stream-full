@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 // ═══════════════════════════════════════════════════════════════
-// French-Stream-Full v2.4.9 — add-on Stremio
+// French-Stream-Full v2.4.10 — add-on Stremio
 // ═══════════════════════════════════════════════════════════════
 // • Recherche parallèle (adapters simultanés)
 // • Cache Cinemeta IMDB → titre (évite les re-requêtes)
@@ -24,6 +24,24 @@ const { catalogScore, isMatch } = require('./src/utils/normalize');
 const { fetchText } = require('./src/http');
 const log = require('./src/logger');
 const { buildStreams, resolveDirectStream, parseContentVideoId } = require('./src/streams');
+// ═══════════════════════════════════════════════════════════════════════════════
+// HEADERS POUR LECTURE NATIVE DANS STREMIO
+// ═══════════════════════════════════════════════════════════════════════════════
+const PROXY_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
+  'Referer': 'https://fs26.lol/',
+  'Accept': '*/*',
+  'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.8'
+};
+
+function streamResult(streams) {
+  return {
+    streams,
+    behaviorHints: { notWebReady: false },
+    proxyHeaders: PROXY_HEADERS
+  };
+}
+
 const { discoverMovieSeriesBase, getDiscoveryStatus } = require('./src/site-discovery');
 
 const SITES = loadSites();
@@ -249,7 +267,7 @@ builder.defineStreamHandler(async (args) => {
             const pages = pagesForContent(sr.row.id);
             if (pages.length) {
               const streams = await buildStreams(pages, { season, episode, version: null }, { adapters, SITES });
-              if (streams.length) return { streams };
+              if (streams.length) return streamResult(streams);
             }
           }
         }
@@ -257,17 +275,17 @@ builder.defineStreamHandler(async (args) => {
     } catch (e) {
       log.error('cinemeta', 'stream', String(e).slice(0, 300), { id: args.id });
     }
-    return { streams: [] };
+    return streamResult([]);
   }
 
   // Cas B : ID natif FSF (fsf:anime:hash ou fsf:anime:hash:S1E2)
   const video = parseContentVideoId(args.id);
-  if (!video) return { streams: [] };
+  if (!video) return streamResult([]);
   const { contentId, season, episode } = video;
   const pages = pagesForContent(contentId);
-  if (!pages.length) return { streams: [] };
+  if (!pages.length) return streamResult([]);
   const streams = await buildStreams(pages, { season, episode, version: null }, { adapters, SITES });
-  return { streams };
+  return streamResult(streams);
 });
 
 // ═══════════════════════════════════════════════════════════════
