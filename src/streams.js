@@ -196,6 +196,21 @@ async function resolveDirectStream(url, pageReferer) {
         if (u) return { url: u, streamType: u.includes('.m3u8') ? 'hls' : 'mp4' };
       }
     }
+
+    // ─── SOLUTION 1 : Extraction regex universelle (liens .mp4/.m3u8 dans n'importe quelle page HTML) ───
+    // Charge la page et cherche un vrai flux vidéo brut pour lecture native dans Stremio.
+    try {
+      const isHtmlPage = /\.html/i.test(url) || !/\.(mp4|m3u8|mpd|mkv)$/i.test(url);
+      if (isHtmlPage) {
+        const r = await fetchText(url, { ...opts, timeout: 8000, retries: 0 });
+        if (r.ok && r.text) {
+          const u = extractDirectVideoUrl(r.text);
+          if (u) {
+            return { url: u, streamType: u.includes('.m3u8') ? 'hls' : 'mp4' };
+          }
+        }
+      }
+    } catch {}
   } catch {}
   return null;
 }
@@ -312,7 +327,7 @@ async function buildStreams(pages, want, ctx) {
                 title: `${title}${epTag}\n${hostName} • ${s.quality || 'HD'} (Direct)`,
                 url: probe.variantUrl || direct.url,
                 behaviorHints: {
-                  notWebReady: true,
+                  notWebReady: false,
                   proxyHeaders: {
                     request: {
                       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36',
