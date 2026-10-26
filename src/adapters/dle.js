@@ -30,6 +30,50 @@ class DleAdapter {
   }
   get enabled() { return !!(this.cfg.enabled && this.baseUrl && !/EXEMPLE/i.test(this.baseUrl)); }
 
+
+  // Résout dynamiquement baseUrl via discoveryUrl si nécessaire (ex: fstream.net hub)
+  async ensureBaseUrl() {
+    if (this.baseUrl) return this.baseUrl;
+    const now = Date.now();
+    if (this._discoveryCache.url && now - this._discoveryCache.ts < 24 * 60 * 60 * 1000) {
+      this.baseUrl = this._discoveryCache.url;
+      this.cfg.baseUrl = this._discoveryCache.url;
+      return this.baseUrl;
+    }
+    if (!this.cfg.discoveryUrl) return null;
+    try {
+      const r = await fetchText(this.cfg.discoveryUrl, { timeout: 10000, retries: 0 });
+      if (!r.ok || !r.text) return null;
+      const html = r.text;
+      const baseHost = new URL(this.cfg.discoveryUrl).hostname;
+      const links = [...html.matchAll(/<a[^>]+href=["']([^"']+)["'][^>]*>/gi)].map(m => m[1]);
+      const candidates = [];
+      for (const href of links) {
+        try {
+          const u = new URL(href, this.cfg.discoveryUrl).href;
+          const host = new URL(u).hostname;
+          if (host === baseHost) continue;
+          if (/facebook|twitter|instagram|youtube|google|paypal|patreon/i.test(host)) continue;
+          const score = (/stream|film|french|flix|vod|cinem|watch|play/i.test(u) ? 1 : 0);
+          candidates.push({ url: u, score });
+        } catch {}
+      }
+      candidates.sort((a, b) => b.score - a.score);
+      if (candidates.length) {
+        const discovered = candidates[0].url;
+        const clean = discovered.replace(/\/+$/, '');
+        this.baseUrl = clean;
+        this.cfg.baseUrl = clean;
+        this._discoveryCache = { url: clean, ts: now };
+        log.info(this.siteKey, 'discovery', 'BaseUrl découvert via ' + this.cfg.discoveryUrl + ' -> ' + clean);
+        return clean;
+      }
+    } catch (e) {
+      log.warn(this.siteKey, 'discovery', 'Echec découverte via ' + this.cfg.discoveryUrl, { err: String(e).slice(0, 200) });
+    }
+    return null;
+  }
+
   abs(href) {
     if (!href) return null;
     try { return new URL(decode(href), this.baseUrl + '/').href; } catch { return null; }

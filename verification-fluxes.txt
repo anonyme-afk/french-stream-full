@@ -1,0 +1,749 @@
+Vérification locale French-Stream-Full — aucun jeton ni URL complète ne sera écrit dans ce rapport.
+Domaine films/séries découvert : fs26.lol (source reference)
+Render manifest (french-stream-full.onrender.com) :
+  HTTP 200
+  id=org.frenchstreamfull.addon version=2.4.6
+  types=movie, series
+  catalogues=movie:fsf-movies, series:fsf-series
+  ATTENTION : Render sert une autre version (attendue org.frenchstreamfull.addon v2.4.9); redeploie le dernier commit.
+Render health : HTTP 200, version=2.4.6, commit=(non exposé), branche=(non exposée)
+
+--- CHAÎNE API RENDER / STREMIO : FILM (« Avengers ») ---
+Catalogue Render : HTTP 200, 13 résultat(s), 223 ms
+  Élément reçu : Avengers (movie), correspondance titre 1.00
+Métadonnées Render : HTTP 200, type=movie, 0 épisode(s), 372 ms
+    Flux Render : HTTP 200, 3 source(s), 1147 ms
+      Page externe : fsvid.lol (pas une lecture intégrée)
+      Page externe : vidzy.cc (pas une lecture intégrée)
+      Page externe : uqload.vc (pas une lecture intégrée)
+
+=== LOCAL FILM | recherche « Avengers » ===
+Étape recherche movies : 96 ms, 15 résultat(s)
+Premier résultat : Avengers
+Étape fiche movies : 218 ms; titre=Avengers type=movie épisodes=0 sources=5
+  Source premium (fr)
+  Source vidzy (fr)
+  Source uqload (fr)
+  Source voe (fr)
+  Source filmoon (fr)
+Étape résolution Stremio locale : 1032 ms, 3 source(s)
+  Lien de lecteur externe — fsvid.lol (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — vidzy.cc (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — uqload.vc (ce n’est pas un flux lu directement dans Stremio)
+
+--- CHAÎNE API RENDER / STREMIO : FILM (« Dune ») ---
+Catalogue Render : HTTP 200, 7 résultat(s), 151 ms
+  Élément reçu : Dune (movie), correspondance titre 1.00
+Métadonnées Render : HTTP 200, type=movie, 0 épisode(s), 636 ms
+    Flux Render : HTTP 200, 8 source(s), 1552 ms
+      Page externe : fsvid.lol (pas une lecture intégrée)
+      Page externe : fsvid.lol (pas une lecture intégrée)
+      Page externe : fsvid.lol (pas une lecture intégrée)
+      Page externe : fsvid.lol (pas une lecture intégrée)
+
+=== LOCAL FILM | recherche « Dune » ===
+Étape recherche movies : 90 ms, 15 résultat(s)
+Premier résultat : Dune
+Étape fiche movies : 250 ms; titre=Dune type=movie épisodes=0 sources=19
+  Source premium (vostfr)
+  Source vidzy (vostfr)
+  Source uqload (vostfr)
+  Source dood (vostfr)
+  Source voe (vostfr)
+  Source filmoon (vostfr)
+Étape résolution Stremio locale : 2729 ms, 8 source(s)
+  Lien de lecteur externe — fsvid.lol (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — fsvid.lol (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — fsvid.lol (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — fsvid.lol (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — vidzy.cc (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — vidzy.cc (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — vidzy.cc (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — vidzy.cc (ce n’est pas un flux lu directement dans Stremio)
+
+--- CHAÎNE API RENDER / STREMIO : FILM (« Inception ») ---
+Catalogue Render : HTTP 200, 1 résultat(s), 143 ms
+  Élément reçu : Inception (movie), correspondance titre 1.00
+Métadonnées Render : HTTP 200, type=movie, 0 épisode(s), 412 ms
+    Flux Render : HTTP 200, 7 source(s), 1797 ms
+      Page externe : fsvid.lol (pas une lecture intégrée)
+      Page externe : fsvid.lol (pas une lecture intégrée)
+      Page externe : vidzy.cc (pas une lecture intégrée)
+      Page externe : vidzy.cc (pas une lecture intégrée)
+
+=== LOCAL FILM | recherche « Inception » ===
+Étape recherche movies : 126 ms, 1 résultat(s)
+Premier résultat : Inception
+Étape fiche movies : 227 ms; titre=Inception type=movie épisodes=0 sources=17
+  Source premium (fr)
+  Source vidzy (fr)
+  Source uqload (fr)
+  Source dood (fr)
+  Source voe (fr)
+  Source netu (fr)
+Étape résolution Stremio locale : 1468 ms, 7 source(s)
+  Lien de lecteur externe — fsvid.lol (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — fsvid.lol (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — vidzy.cc (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — vidzy.cc (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — vidzy.cc (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — uqload.vc (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — uqload.vc (ce n’est pas un flux lu directement dans Stremio)
+
+--- CHAÎNE API RENDER / STREMIO : FILM (« Interstellar ») ---
+Catalogue Render : HTTP 200, 1 résultat(s), 159 ms
+  Élément reçu : Interstellar (movie), correspondance titre 1.00
+Métadonnées Render : HTTP 200, type=movie, 0 épisode(s), 377 ms
+    Flux Render : HTTP 200, 8 source(s), 1499 ms
+      Page externe : fsvid.lol (pas une lecture intégrée)
+      Page externe : fsvid.lol (pas une lecture intégrée)
+      Page externe : fsvid.lol (pas une lecture intégrée)
+      Page externe : vidzy.org (pas une lecture intégrée)
+
+=== LOCAL FILM | recherche « Interstellar » ===
+Étape recherche movies : 81 ms, 1 résultat(s)
+Premier résultat : Interstellar
+Étape fiche movies : 241 ms; titre=Interstellar type=movie épisodes=0 sources=15
+  Source premium (vostfr)
+  Source vidzy (vostfr)
+  Source uqload (vostfr)
+  Source dood (vostfr)
+  Source voe (vostfr)
+  Source filmoon (vostfr)
+  Source netu (vostfr)
+Étape résolution Stremio locale : 1750 ms, 8 source(s)
+  Lien de lecteur externe — fsvid.lol (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — fsvid.lol (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — fsvid.lol (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — vidzy.org (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — vidzy.cc (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — vidzy.cc (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — uqload.vc (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — uqload.vc (ce n’est pas un flux lu directement dans Stremio)
+
+--- CHAÎNE API RENDER / STREMIO : FILM (« Gladiator ») ---
+Catalogue Render : HTTP 200, 5 résultat(s), 222 ms
+  Élément reçu : Gladiator (movie), correspondance titre 1.00
+Métadonnées Render : HTTP 200, type=movie, 0 épisode(s), 423 ms
+    Flux Render : HTTP 200, 3 source(s), 706 ms
+      Page externe : fsvid.lol (pas une lecture intégrée)
+      Page externe : vidzy.cc (pas une lecture intégrée)
+      Page externe : uqload.vc (pas une lecture intégrée)
+
+=== LOCAL FILM | recherche « Gladiator » ===
+Étape recherche movies : 81 ms, 11 résultat(s)
+Premier résultat : Gladiator
+Étape fiche movies : 282 ms; titre=Gladiator type=movie épisodes=0 sources=6
+  Source premium (fr)
+  Source vidzy (fr)
+  Source uqload (fr)
+  Source dood (fr)
+  Source voe (fr)
+  Source filmoon (fr)
+Étape résolution Stremio locale : 1633 ms, 3 source(s)
+  Lien de lecteur externe — fsvid.lol (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — vidzy.cc (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — uqload.vc (ce n’est pas un flux lu directement dans Stremio)
+
+--- CHAÎNE API RENDER / STREMIO : FILM (« Titanic ») ---
+Catalogue Render : HTTP 200, 13 résultat(s), 264 ms
+  Élément reçu : Titanic (movie), correspondance titre 1.00
+Métadonnées Render : HTTP 200, type=movie, 0 épisode(s), 359 ms
+    Flux Render : HTTP 200, 3 source(s), 1297 ms
+      Page externe : fsvid.lol (pas une lecture intégrée)
+      Page externe : vidzy.cc (pas une lecture intégrée)
+      Page externe : uqload.vc (pas une lecture intégrée)
+
+=== LOCAL FILM | recherche « Titanic » ===
+Étape recherche movies : 115 ms, 15 résultat(s)
+Premier résultat : Titanic
+Étape fiche movies : 215 ms; titre=Titanic type=movie épisodes=0 sources=6
+  Source premium (vostfr)
+  Source vidzy (vostfr)
+  Source uqload (vostfr)
+  Source dood (vostfr)
+  Source voe (vostfr)
+  Source filmoon (vostfr)
+Étape résolution Stremio locale : 1343 ms, 3 source(s)
+  Lien de lecteur externe — fsvid.lol (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — vidzy.cc (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — uqload.vc (ce n’est pas un flux lu directement dans Stremio)
+
+--- CHAÎNE API RENDER / STREMIO : FILM (« Oppenheimer ») ---
+Catalogue Render : HTTP 200, 2 résultat(s), 92 ms
+  Élément reçu : Oppenheimer (movie), correspondance titre 1.00
+Métadonnées Render : HTTP 200, type=movie, 0 épisode(s), 380 ms
+    Flux Render : HTTP 200, 8 source(s), 1602 ms
+      Page externe : fsvid.lol (pas une lecture intégrée)
+      Page externe : fsvid.lol (pas une lecture intégrée)
+      Page externe : fsvid.lol (pas une lecture intégrée)
+      Page externe : vidzy.cc (pas une lecture intégrée)
+
+=== LOCAL FILM | recherche « Oppenheimer » ===
+Étape recherche movies : 68 ms, 4 résultat(s)
+Premier résultat : Oppenheimer
+Étape fiche movies : 273 ms; titre=Oppenheimer type=movie épisodes=0 sources=25
+  Source premium (fr)
+  Source vidzy (fr)
+  Source uqload (fr)
+  Source dood (fr)
+  Source voe (fr)
+  Source filmoon (fr)
+  Source netu (fr)
+Étape résolution Stremio locale : 2895 ms, 8 source(s)
+  Lien de lecteur externe — fsvid.lol (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — fsvid.lol (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — fsvid.lol (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — vidzy.cc (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — vidzy.cc (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — vidzy.cc (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — vidzy.cc (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — uqload.vc (ce n’est pas un flux lu directement dans Stremio)
+
+--- CHAÎNE API RENDER / STREMIO : FILM (« The Matrix ») ---
+Catalogue Render : HTTP 200, 0 résultat(s), 248 ms
+
+=== LOCAL FILM | recherche « The Matrix » ===
+Étape recherche movies : 107 ms, 8 résultat(s)
+Premier résultat : A Glitch in the Matrix
+Étape fiche movies : 560 ms; titre=A Glitch in the Matrix type=movie épisodes=0 sources=2
+  Source vidzy (vostfr)
+Étape résolution Stremio locale : 1264 ms, 1 source(s)
+  Lien de lecteur externe — vidzy.live (ce n’est pas un flux lu directement dans Stremio)
+
+--- CHAÎNE API RENDER / STREMIO : FILM (« Jurassic Park ») ---
+Catalogue Render : HTTP 200, 2 résultat(s), 115 ms
+  Élément reçu : Jurassic Park (movie), correspondance titre 1.00
+Métadonnées Render : HTTP 200, type=movie, 0 épisode(s), 356 ms
+    Flux Render : HTTP 200, 7 source(s), 1118 ms
+      Page externe : fsvid.lol (pas une lecture intégrée)
+      Page externe : fsvid.lol (pas une lecture intégrée)
+      Page externe : vidzy.cc (pas une lecture intégrée)
+      Page externe : vidzy.cc (pas une lecture intégrée)
+
+=== LOCAL FILM | recherche « Jurassic Park » ===
+Étape recherche movies : 83 ms, 4 résultat(s)
+Premier résultat : Jurassic Park III
+Étape fiche movies : 420 ms; titre=Jurassic Park III type=movie épisodes=0 sources=11
+  Source premium (fr)
+  Source vidzy (fr)
+  Source uqload (fr)
+  Source dood (fr)
+  Source voe (fr)
+  Source filmoon (fr)
+Étape résolution Stremio locale : 1698 ms, 4 source(s)
+  Lien de lecteur externe — fsvid.lol (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — vidzy.cc (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — uqload.vc (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — filemoon.sx (ce n’est pas un flux lu directement dans Stremio)
+
+--- CHAÎNE API RENDER / STREMIO : FILM (« Spider-Man ») ---
+Catalogue Render : HTTP 200, 15 résultat(s), 133 ms
+  Élément reçu : Spider-Man (movie), correspondance titre 1.00
+Métadonnées Render : HTTP 200, type=movie, 0 épisode(s), 496 ms
+    Flux Render : HTTP 200, 6 source(s), 865 ms
+      Page externe : fsvid.lol (pas une lecture intégrée)
+      Page externe : fsvid.lol (pas une lecture intégrée)
+      Page externe : vidzy.cc (pas une lecture intégrée)
+      Page externe : vidzy.org (pas une lecture intégrée)
+
+=== LOCAL FILM | recherche « Spider-Man » ===
+Étape recherche movies : 81 ms, 15 résultat(s)
+Premier résultat : Spider-Man : Across the Spider-Verse
+Étape fiche movies : 500 ms; titre=Spider-Man : Across the Spider-Verse type=movie épisodes=0 sources=10
+  Source premium (fr)
+  Source vidzy (fr)
+  Source uqload (fr)
+  Source dood (fr)
+  Source voe (fr)
+Étape résolution Stremio locale : 1757 ms, 3 source(s)
+  Lien de lecteur externe — fsvid.lol (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — vidzy.cc (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — uqload.vc (ce n’est pas un flux lu directement dans Stremio)
+
+--- CHAÎNE API RENDER / STREMIO : SÉRIE (« Breaking Bad ») ---
+Catalogue Render : HTTP 200, 5 résultat(s), 177 ms
+  Élément reçu : Breaking Bad - Saison 2 (series), correspondance titre 1.00
+Métadonnées Render : HTTP 200, type=series, 13 épisode(s), 455 ms
+  Sélection saison 2, épisode 1 — ID canonique
+    Flux Render : HTTP 200, 6 source(s), 1032 ms
+      Page externe : fsvid.lol (pas une lecture intégrée)
+      Page externe : vidzy.cc (pas une lecture intégrée)
+      Page externe : uqload.vc (pas une lecture intégrée)
+      Page externe : fsvid.lol (pas une lecture intégrée)
+
+=== LOCAL SÉRIE | recherche « Breaking Bad » ===
+Étape recherche movies : 202 ms, 8 résultat(s)
+Premier résultat : Breaking Bad - Saison 2
+Étape fiche movies : 465 ms; titre=Breaking Bad - Saison 2 type=series épisodes=26 sources=130
+  Épisode retenu : saison 2, épisode 1 (Épisode 1 (VF))
+  Source premium (fr)
+  Source vidzy (fr)
+  Source uqload (fr)
+  Source netu (fr)
+  Source voe (fr)
+Étape résolution Stremio locale : 1610 ms, 6 source(s)
+  Lien de lecteur externe — fsvid.lol (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — vidzy.cc (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — uqload.vc (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — fsvid.lol (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — vidzy.cc (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — uqload.vc (ce n’est pas un flux lu directement dans Stremio)
+
+--- CHAÎNE API RENDER / STREMIO : SÉRIE (« Game of Thrones ») ---
+Catalogue Render : HTTP 200, 8 résultat(s), 142 ms
+  Élément reçu : Game of Thrones - Saison 6 (series), correspondance titre 1.00
+Métadonnées Render : HTTP 200, type=series, 10 épisode(s), 432 ms
+  Sélection saison 6, épisode 1 — ID canonique
+    Flux Render : HTTP 200, 6 source(s), 773 ms
+      Page externe : fsvid.lol (pas une lecture intégrée)
+      Page externe : vidzy.cc (pas une lecture intégrée)
+      Page externe : uqload.vc (pas une lecture intégrée)
+      Page externe : fsvid.lol (pas une lecture intégrée)
+
+=== LOCAL SÉRIE | recherche « Game of Thrones » ===
+Étape recherche movies : 72 ms, 8 résultat(s)
+Premier résultat : Game of Thrones - Saison 6
+Étape fiche movies : 373 ms; titre=Game of Thrones - Saison 6 type=series épisodes=20 sources=100
+  Épisode retenu : saison 6, épisode 1 (Épisode 1 (VF))
+  Source premium (fr)
+  Source vidzy (fr)
+  Source uqload (fr)
+  Source netu (fr)
+  Source voe (fr)
+Étape résolution Stremio locale : 1774 ms, 6 source(s)
+  Lien de lecteur externe — fsvid.lol (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — vidzy.cc (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — uqload.vc (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — fsvid.lol (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — vidzy.cc (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — uqload.vc (ce n’est pas un flux lu directement dans Stremio)
+
+--- CHAÎNE API RENDER / STREMIO : SÉRIE (« Stranger Things ») ---
+Catalogue Render : HTTP 200, 8 résultat(s), 131 ms
+  Élément reçu : Stranger Things - Saison 3 (series), correspondance titre 1.00
+Métadonnées Render : HTTP 200, type=series, 8 épisode(s), 427 ms
+  Sélection saison 3, épisode 1 — ID canonique
+    Flux Render : HTTP 200, 6 source(s), 828 ms
+      Page externe : fsvid.lol (pas une lecture intégrée)
+      Page externe : vidzy.cc (pas une lecture intégrée)
+      Page externe : uqload.vc (pas une lecture intégrée)
+      Page externe : fsvid.lol (pas une lecture intégrée)
+
+=== LOCAL SÉRIE | recherche « Stranger Things » ===
+Étape recherche movies : 101 ms, 9 résultat(s)
+Premier résultat : Stranger Things: The First Shadow – Les coulisses de la pièce
+Étape fiche movies : 628 ms; titre=Stranger Things: The First Shadow – Les coulisses de la pièce type=movie épisodes=0 sources=17
+  Aucune source déclarée pour cet épisode/film.
+Étape résolution Stremio locale : 213 ms, 0 source(s)
+  Rien ne prouve encore qu’un flux soit lisible. Vérifie la lecture dans Stremio après installation locale.
+
+--- CHAÎNE API RENDER / STREMIO : SÉRIE (« The Walking Dead ») ---
+Catalogue Render : HTTP 200, 15 résultat(s), 306 ms
+  Élément reçu : The Walking Dead - Saison 6 (series), correspondance titre 1.00
+Métadonnées Render : HTTP 200, type=series, 16 épisode(s), 460 ms
+  Sélection saison 6, épisode 1 — ID canonique
+    Flux Render : HTTP 200, 4 source(s), 989 ms
+      Page externe : fsvid.lol (pas une lecture intégrée)
+      Page externe : vidzy.cc (pas une lecture intégrée)
+      Page externe : uqload.vc (pas une lecture intégrée)
+      Page externe : uqload.vc (pas une lecture intégrée)
+
+=== LOCAL SÉRIE | recherche « The Walking Dead » ===
+Étape recherche movies : 108 ms, 15 résultat(s)
+Premier résultat : The Walking Dead: Dead City - Saison 1
+Étape fiche movies : 456 ms; titre=The Walking Dead: Dead City - Saison 1 type=series épisodes=12 sources=60
+  Épisode retenu : saison 1, épisode 1 (Épisode 1 (VF))
+  Source premium (fr)
+  Source vidzy (fr)
+  Source uqload (fr)
+  Source netu (fr)
+  Source voe (fr)
+Étape résolution Stremio locale : 1572 ms, 6 source(s)
+  Lien de lecteur externe — fsvid.lol (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — vidzy.cc (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — uqload.vc (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — fsvid.lol (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — vidzy.cc (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — uqload.vc (ce n’est pas un flux lu directement dans Stremio)
+
+--- CHAÎNE API RENDER / STREMIO : SÉRIE (« The Boys ») ---
+Catalogue Render : HTTP 200, 7 résultat(s), 151 ms
+  Élément reçu : The Boys - Saison 4 (series), correspondance titre 1.00
+Métadonnées Render : HTTP 200, type=series, 8 épisode(s), 535 ms
+  Sélection saison 4, épisode 1 — ID canonique
+    Flux Render : HTTP 200, 6 source(s), 972 ms
+      Page externe : fsvid.lol (pas une lecture intégrée)
+      Page externe : vidzy.cc (pas une lecture intégrée)
+      Page externe : uqload.vc (pas une lecture intégrée)
+      Page externe : fsvid.lol (pas une lecture intégrée)
+
+=== LOCAL SÉRIE | recherche « The Boys » ===
+Étape recherche movies : 78 ms, 15 résultat(s)
+Premier résultat : The Boys in the Band
+Étape fiche movies : 890 ms; titre=The Boys in the Band type=movie épisodes=0 sources=9
+  Aucune source déclarée pour cet épisode/film.
+Étape résolution Stremio locale : 642 ms, 0 source(s)
+  Rien ne prouve encore qu’un flux soit lisible. Vérifie la lecture dans Stremio après installation locale.
+
+--- CHAÎNE API RENDER / STREMIO : SÉRIE (« Sherlock ») ---
+Catalogue Render : HTTP 200, 15 résultat(s), 392 ms
+  Élément reçu : Sherlock Holmes et le mystère de la vallée de Boscombe (series), correspondance titre 0.82
+Métadonnées Render : HTTP 200, type=movie, 0 épisode(s), 322 ms
+  ERREUR : le catalogue series a renvoyé une fiche de type movie.
+    Flux Render : HTTP 200, 1 source(s), 293 ms
+      Page externe : vidzy.cc (pas une lecture intégrée)
+
+=== LOCAL SÉRIE | recherche « Sherlock » ===
+Étape recherche movies : 98 ms, 15 résultat(s)
+Premier résultat : Sherlock Holmes et le mystère de la vallée de Boscombe
+Étape fiche movies : 230 ms; titre=Sherlock Holmes et le mystère de la vallée de Boscombe type=movie épisodes=0 sources=2
+  Aucune source déclarée pour cet épisode/film.
+Étape résolution Stremio locale : 212 ms, 0 source(s)
+  Rien ne prouve encore qu’un flux soit lisible. Vérifie la lecture dans Stremio après installation locale.
+
+--- CHAÎNE API RENDER / STREMIO : SÉRIE (« Prison Break ») ---
+Catalogue Render : HTTP 200, 5 résultat(s), 132 ms
+  Élément reçu : Prison Break - Saison 2 (series), correspondance titre 1.00
+Métadonnées Render : HTTP 200, type=series, 22 épisode(s), 424 ms
+  Sélection saison 2, épisode 1 — ID canonique
+    Flux Render : HTTP 200, 3 source(s), 777 ms
+      Page externe : fsvid.lol (pas une lecture intégrée)
+      Page externe : vidzy.cc (pas une lecture intégrée)
+      Page externe : uqload.vc (pas une lecture intégrée)
+
+=== LOCAL SÉRIE | recherche « Prison Break » ===
+Étape recherche movies : 193 ms, 7 résultat(s)
+Premier résultat : Prison Break - Saison 2
+Étape fiche movies : 357 ms; titre=Prison Break - Saison 2 type=series épisodes=22 sources=110
+  Épisode retenu : saison 2, épisode 1 (Épisode 1 (VF))
+  Source premium (fr)
+  Source vidzy (fr)
+  Source uqload (fr)
+  Source netu (fr)
+  Source voe (fr)
+Étape résolution Stremio locale : 1048 ms, 3 source(s)
+  Lien de lecteur externe — fsvid.lol (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — vidzy.cc (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — uqload.vc (ce n’est pas un flux lu directement dans Stremio)
+
+--- CHAÎNE API RENDER / STREMIO : SÉRIE (« La Casa de Papel ») ---
+Catalogue Render : HTTP 200, 8 résultat(s), 124 ms
+  Élément reçu : La Casa de Papel - Saison 3 (series), correspondance titre 1.00
+Métadonnées Render : HTTP 200, type=series, 8 épisode(s), 410 ms
+  Sélection saison 3, épisode 1 — ID canonique
+    Flux Render : HTTP 200, 6 source(s), 1172 ms
+      Page externe : fsvid.lol (pas une lecture intégrée)
+      Page externe : vidzy.cc (pas une lecture intégrée)
+      Page externe : uqload.vc (pas une lecture intégrée)
+      Page externe : fsvid.lol (pas une lecture intégrée)
+
+=== LOCAL SÉRIE | recherche « La Casa de Papel » ===
+Étape recherche movies : 112 ms, 8 résultat(s)
+Premier résultat : La casa de papel : Le phénomène
+Étape fiche movies : 435 ms; titre=La casa de papel : Le phénomène type=movie épisodes=0 sources=10
+  Aucune source déclarée pour cet épisode/film.
+Étape résolution Stremio locale : 206 ms, 0 source(s)
+  Rien ne prouve encore qu’un flux soit lisible. Vérifie la lecture dans Stremio après installation locale.
+
+--- CHAÎNE API RENDER / STREMIO : SÉRIE (« The Last of Us ») ---
+Catalogue Render : HTTP 200, 3 résultat(s), 235 ms
+  Élément reçu : The Last of Us - Saison 2 (series), correspondance titre 1.00
+Métadonnées Render : HTTP 200, type=series, 7 épisode(s), 436 ms
+  Sélection saison 2, épisode 1 — ID canonique
+    Flux Render : HTTP 200, 6 source(s), 879 ms
+      Page externe : fsvid.lol (pas une lecture intégrée)
+      Page externe : vidzy.cc (pas une lecture intégrée)
+      Page externe : uqload.vc (pas une lecture intégrée)
+      Page externe : fsvid.lol (pas une lecture intégrée)
+
+=== LOCAL SÉRIE | recherche « The Last of Us » ===
+Étape recherche movies : 112 ms, 15 résultat(s)
+Premier résultat : The Last of Us - Saison 2
+Étape fiche movies : 430 ms; titre=The Last of Us - Saison 2 type=series épisodes=14 sources=70
+  Épisode retenu : saison 2, épisode 1 (Épisode 1 (VF))
+  Source premium (fr)
+  Source vidzy (fr)
+  Source uqload (fr)
+  Source netu (fr)
+  Source voe (fr)
+Étape résolution Stremio locale : 1451 ms, 6 source(s)
+  Lien de lecteur externe — fsvid.lol (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — vidzy.cc (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — uqload.vc (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — fsvid.lol (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — vidzy.cc (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — uqload.vc (ce n’est pas un flux lu directement dans Stremio)
+
+--- CHAÎNE API RENDER / STREMIO : SÉRIE (« The Office ») ---
+Catalogue Render : HTTP 200, 12 résultat(s), 200 ms
+  Élément reçu : The Office (US) - Saison 8 (series), correspondance titre 0.82
+Métadonnées Render : HTTP 200, type=series, 24 épisode(s), 421 ms
+  Sélection saison 8, épisode 1 — ID canonique
+    Flux Render : HTTP 200, 4 source(s), 760 ms
+      Page externe : fsvid.lol (pas une lecture intégrée)
+      Page externe : vidzy.cc (pas une lecture intégrée)
+      Page externe : uqload.vc (pas une lecture intégrée)
+      Page externe : uqload.vc (pas une lecture intégrée)
+
+=== LOCAL SÉRIE | recherche « The Office » ===
+Étape recherche movies : 83 ms, 15 résultat(s)
+Premier résultat : The Office (UK)
+Étape fiche movies : 201 ms; titre=The Office (UK) type=series épisodes=6 sources=6
+  Épisode retenu : saison 1, épisode 1 (Épisode 1 (VOSTFR))
+  Source vidzy (vostfr)
+Étape résolution Stremio locale : 358 ms, 1 source(s)
+  Lien de lecteur externe — vidzy.cc (ce n’est pas un flux lu directement dans Stremio)
+
+--- CHAÎNE API RENDER / STREMIO : ANIME (« Naruto ») ---
+Catalogue Render : HTTP 200, 23 résultat(s), 366 ms
+  Élément reçu : Naruto Shippuden Kai - Saison 1 (series), correspondance titre 0.82
+Métadonnées Render : HTTP 200, type=series, 32 épisode(s), 192 ms
+  Sélection saison 1, épisode 1 — ID canonique
+    Flux Render : HTTP 200, 2 source(s), 294 ms
+      Page externe : vidzy.org (pas une lecture intégrée)
+      Page externe : vidhsareup.io (pas une lecture intégrée)
+
+=== LOCAL ANIME | recherche « Naruto » ===
+Étape recherche anime : 248 ms, 17 résultat(s)
+Premier résultat : Naruto Shippuden Kai - Saison 1
+Étape fiche anime : 415 ms; titre=Naruto Shippuden Kai - Saison 1 type=series épisodes=32 sources=64
+  Épisode retenu : saison 1, épisode 1 (Épisode 1 (VF))
+  Source vidzy (fr)
+  Source luluvid (fr)
+Étape résolution Stremio locale : 821 ms, 2 source(s)
+  Lien de lecteur externe — vidzy.org (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — vidhsareup.io (ce n’est pas un flux lu directement dans Stremio)
+
+--- CHAÎNE API RENDER / STREMIO : ANIME (« One Piece ») ---
+Catalogue Render : HTTP 200, 30 résultat(s), 755 ms
+  Élément reçu : One Piece - Saison 23 : ELBAPH (series), correspondance titre 1.00
+Métadonnées Render : HTTP 200, type=series, 25 épisode(s), 405 ms
+  Sélection saison 23, épisode 1 — ID canonique
+    Flux Render : HTTP 200, 1 source(s), 268 ms
+      Page externe : vidzy.org (pas une lecture intégrée)
+
+=== LOCAL ANIME | recherche « One Piece » ===
+Étape recherche anime : 78 ms, 20 résultat(s)
+Premier résultat : One Piece - Saison 23 : ELBAPH
+Étape fiche anime : 292 ms; titre=One Piece - Saison 23 : ELBAPH type=series épisodes=25 sources=50
+  Épisode retenu : saison 23, épisode 1 (Épisode 1 (VOSTFR))
+  Source vidzy (vostfr)
+  Source luluvid (vostfr)
+Étape résolution Stremio locale : 503 ms, 1 source(s)
+  Lien de lecteur externe — vidzy.org (ce n’est pas un flux lu directement dans Stremio)
+
+--- CHAÎNE API RENDER / STREMIO : ANIME (« L’Attaque des Titans ») ---
+Catalogue Render : HTTP 200, 18 résultat(s), 618 ms
+  Élément reçu : L'Attaque des Titans - Saison 4 - Final Part (series), correspondance titre 1.00
+Métadonnées Render : HTTP 200, type=series, 2 épisode(s), 393 ms
+  Sélection saison 4, épisode 1 — ID canonique
+    Flux Render : HTTP 200, 1 source(s), 307 ms
+      Page externe : vidzy.org (pas une lecture intégrée)
+
+=== LOCAL ANIME | recherche « L’Attaque des Titans » ===
+Étape recherche anime : 81 ms, 10 résultat(s)
+Premier résultat : L’Attaque des Titans : La Dernière Attaque
+Étape fiche anime : 396 ms; titre=L’Attaque des Titans : La Dernière Attaque type=series épisodes=1 sources=2
+  Épisode retenu : saison 1, épisode 1 (Épisode 1 (VOSTFR))
+  Source vidzy (vostfr)
+  Source luluvid (vostfr)
+Étape résolution Stremio locale : 950 ms, 2 source(s)
+  Lien de lecteur externe — vidzy.org (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — luluvid.com (ce n’est pas un flux lu directement dans Stremio)
+
+--- CHAÎNE API RENDER / STREMIO : ANIME (« Demon Slayer ») ---
+Catalogue Render : HTTP 200, 11 résultat(s), 376 ms
+  Élément reçu : Demon Slayer : Kimetsu no Yaiba - Saison 5 : Entraînement des Piliers (series), correspondance titre 0.82
+Métadonnées Render : HTTP 200, type=series, 8 épisode(s), 392 ms
+  Sélection saison 5, épisode 1 — ID canonique
+    Flux Render : HTTP 200, 3 source(s), 897 ms
+      Page externe : vidzy.org (pas une lecture intégrée)
+      Page externe : luluvid.com (pas une lecture intégrée)
+      Page externe : vidzy.live (pas une lecture intégrée)
+
+=== LOCAL ANIME | recherche « Demon Slayer » ===
+Étape recherche anime : 101 ms, 9 résultat(s)
+Premier résultat : Demon Slayer : Kimetsu no Yaiba La Forteresse Infinie
+Étape fiche anime : 431 ms; titre=Demon Slayer : Kimetsu no Yaiba La Forteresse Infinie type=series épisodes=2 sources=4
+  Épisode retenu : saison 1, épisode 1 (Épisode 1 (VF))
+  Source vidzy (fr)
+  Source luluvid (fr)
+Étape résolution Stremio locale : 857 ms, 2 source(s)
+  Lien de lecteur externe — vidzy.org (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — vidzy.org (ce n’est pas un flux lu directement dans Stremio)
+
+--- CHAÎNE API RENDER / STREMIO : ANIME (« Jujutsu Kaisen ») ---
+Catalogue Render : HTTP 200, 7 résultat(s), 307 ms
+  Élément reçu : Jujutsu Kaisen - Saison 1 (series), correspondance titre 1.00
+Métadonnées Render : HTTP 200, type=series, 24 épisode(s), 340 ms
+  Sélection saison 1, épisode 1 — ID canonique
+    Flux Render : HTTP 200, 3 source(s), 309 ms
+      Page externe : vidzy.live (pas une lecture intégrée)
+      Page externe : vidzy.org (pas une lecture intégrée)
+      Page externe : vidhsareup.io (pas une lecture intégrée)
+
+=== LOCAL ANIME | recherche « Jujutsu Kaisen » ===
+Étape recherche anime : 83 ms, 5 résultat(s)
+Premier résultat : Jujutsu Kaisen - Saison 1
+Étape fiche anime : 304 ms; titre=Jujutsu Kaisen - Saison 1 type=series épisodes=48 sources=96
+  Épisode retenu : saison 1, épisode 1 (Épisode 1 (VF))
+  Source vidzy (fr)
+  Source luluvid (fr)
+Étape résolution Stremio locale : 850 ms, 3 source(s)
+  Lien de lecteur externe — vidzy.live (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — vidzy.org (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — vidhsareup.io (ce n’est pas un flux lu directement dans Stremio)
+
+--- CHAÎNE API RENDER / STREMIO : ANIME (« Death Note ») ---
+Catalogue Render : HTTP 200, 8 résultat(s), 1129 ms
+  Élément reçu : Death Note - Saison 1 (series), correspondance titre 1.00
+Métadonnées Render : HTTP 200, type=series, 37 épisode(s), 436 ms
+  Sélection saison 1, épisode 1 — ID canonique
+    Flux Render : HTTP 200, 1 source(s), 446 ms
+      Page externe : vidzy.org (pas une lecture intégrée)
+
+=== LOCAL ANIME | recherche « Death Note » ===
+Étape recherche anime : 88 ms, 1 résultat(s)
+Premier résultat : Death Note - Saison 1
+Étape fiche anime : 224 ms; titre=Death Note - Saison 1 type=series épisodes=37 sources=74
+  Épisode retenu : saison 1, épisode 1 (Épisode 1 (VF))
+  Source vidzy (fr)
+  Source luluvid (fr)
+Étape résolution Stremio locale : 702 ms, 1 source(s)
+  Lien de lecteur externe — vidzy.org (ce n’est pas un flux lu directement dans Stremio)
+
+--- CHAÎNE API RENDER / STREMIO : ANIME (« Dragon Ball Z ») ---
+Catalogue Render : HTTP 200, 30 résultat(s), 328 ms
+  Élément reçu : Dragon Ball Z - La Résurrection de ‘F’ (series), correspondance titre 0.82
+Métadonnées Render : HTTP 200, type=series, 1 épisode(s), 408 ms
+  Sélection saison 1, épisode 1 — ID canonique
+    Flux Render : HTTP 200, 2 source(s), 429 ms
+      Page externe : vidzy.org (pas une lecture intégrée)
+      Page externe : vidhsareup.io (pas une lecture intégrée)
+
+=== LOCAL ANIME | recherche « Dragon Ball Z » ===
+Étape recherche anime : 127 ms, 20 résultat(s)
+Premier résultat : Dragon Ball Z - La Résurrection de ‘F’
+Étape fiche anime : 511 ms; titre=Dragon Ball Z - La Résurrection de ‘F’ type=series épisodes=2 sources=4
+  Épisode retenu : saison 1, épisode 1 (Épisode 1 (VF))
+  Source vidzy (fr)
+  Source luluvid (fr)
+Étape résolution Stremio locale : 1923 ms, 2 source(s)
+  Lien de lecteur externe — vidzy.org (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — vidhsareup.io (ce n’est pas un flux lu directement dans Stremio)
+
+--- CHAÎNE API RENDER / STREMIO : ANIME (« My Hero Academia ») ---
+Catalogue Render : HTTP 200, 21 résultat(s), 307 ms
+  Élément reçu : My Hero Academia - Saison 8 (series), correspondance titre 1.00
+Métadonnées Render : HTTP 200, type=series, 11 épisode(s), 464 ms
+  Sélection saison 8, épisode 1 — ID canonique
+    Flux Render : HTTP 200, 2 source(s), 390 ms
+      Page externe : vidzy.org (pas une lecture intégrée)
+      Page externe : luluvid.com (pas une lecture intégrée)
+
+=== LOCAL ANIME | recherche « My Hero Academia » ===
+Étape recherche anime : 93 ms, 17 résultat(s)
+Premier résultat : My Hero Academia : Vigilantes - Saison 2
+Étape fiche anime : 592 ms; titre=My Hero Academia : Vigilantes - Saison 2 type=series épisodes=26 sources=52
+  Épisode retenu : saison 2, épisode 1 (Épisode 1 (VF))
+  Source vidzy (fr)
+  Source luluvid (fr)
+Étape résolution Stremio locale : 1143 ms, 4 source(s)
+  Lien de lecteur externe — vidzy.org (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — luluvid.com (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — vidzy.org (ce n’est pas un flux lu directement dans Stremio)
+  Lien de lecteur externe — luluvid.com (ce n’est pas un flux lu directement dans Stremio)
+
+--- CHAÎNE API RENDER / STREMIO : ANIME (« One Punch Man ») ---
+Catalogue Render : HTTP 200, 7 résultat(s), 133 ms
+  Élément reçu : One-Punch Man - Saison 3 (series), correspondance titre 1.00
+Métadonnées Render : HTTP 200, type=series, 12 épisode(s), 382 ms
+  Sélection saison 3, épisode 1 — ID canonique
+    Flux Render : HTTP 200, 3 source(s), 1018 ms
+      Page externe : vidzy.org (pas une lecture intégrée)
+      Page externe : vidzy.org (pas une lecture intégrée)
+      Page externe : luluvid.com (pas une lecture intégrée)
+
+=== LOCAL ANIME | recherche « One Punch Man » ===
+Étape recherche anime : 85 ms, 4 résultat(s)
+Premier résultat : One Punch Man - Specials
+Étape fiche anime : 199 ms; titre=One Punch Man - Specials type=series épisodes=6 sources=12
+  Épisode retenu : saison 0, épisode 1 (Spécial 1 (VF))
+  Source vidzy (fr)
+  Source luluvid (fr)
+Étape résolution Stremio locale : 654 ms, 1 source(s)
+  Lien de lecteur externe — vidzy.org (ce n’est pas un flux lu directement dans Stremio)
+
+--- CHAÎNE API RENDER / STREMIO : ANIME (« Tokyo Ghoul ») ---
+Catalogue Render : HTTP 200, 6 résultat(s), 116 ms
+  Élément reçu : Tokyo Ghoul - Saison 2 (series), correspondance titre 1.00
+Métadonnées Render : HTTP 200, type=series, 12 épisode(s), 500 ms
+  Sélection saison 2, épisode 1 — ID canonique
+    Flux Render : HTTP 200, 2 source(s), 185 ms
+      Page externe : vidzy.org (pas une lecture intégrée)
+      Page externe : luluvid.com (pas une lecture intégrée)
+
+=== LOCAL ANIME | recherche « Tokyo Ghoul » ===
+Étape recherche anime : 87 ms, 4 résultat(s)
+Premier résultat : Tokyo Ghoul:re - Saison 2
+Étape fiche anime : 394 ms; titre=Tokyo Ghoul:Re - Saison 2 type=series épisodes=24 sources=48
+  Épisode retenu : saison 2, épisode 1 (Épisode 1 (VF))
+  Source vidzy (fr)
+  Source luluvid (fr)
+Étape résolution Stremio locale : 515 ms, 1 source(s)
+  Lien de lecteur externe — vidzy.org (ce n’est pas un flux lu directement dans Stremio)
+
+=== VÉRIFICATION CIBLÉE DES SPÉCIAUX ===
+
+--- CHAÎNE API RENDER / STREMIO : ANIME SPÉCIAUX (« One Punch Man ») ---
+Catalogue Render : HTTP 200, 7 résultat(s), 106 ms
+  Élément reçu : One-Punch Man - Saison 3 (series), correspondance titre 1.00
+Métadonnées Render : HTTP 200, type=series, 12 épisode(s), 45 ms
+  Sélection saison 3, épisode 1 — ID canonique
+    Flux Render : HTTP 200, 3 source(s), 52 ms
+      Page externe : vidzy.org (pas une lecture intégrée)
+      Page externe : vidzy.org (pas une lecture intégrée)
+      Page externe : luluvid.com (pas une lecture intégrée)
+  Sélection saison 3, épisode 2 — ID canonique
+    Flux Render : HTTP 200, 3 source(s), 508 ms
+      Page externe : vidzy.org (pas une lecture intégrée)
+      Page externe : vidzy.org (pas une lecture intégrée)
+      Page externe : luluvid.com (pas une lecture intégrée)
+  Sélection saison 3, épisode 3 — ID canonique
+    Flux Render : HTTP 200, 3 source(s), 479 ms
+      Page externe : vidzy.org (pas une lecture intégrée)
+      Page externe : vidzy.org (pas une lecture intégrée)
+      Page externe : luluvid.com (pas une lecture intégrée)
+  Sélection saison 3, épisode 4 — ID canonique
+    Flux Render : HTTP 200, 3 source(s), 609 ms
+      Page externe : vidzy.org (pas une lecture intégrée)
+      Page externe : vidzy.org (pas une lecture intégrée)
+      Page externe : luluvid.com (pas une lecture intégrée)
+  Sélection saison 3, épisode 5 — ID canonique
+    Flux Render : HTTP 200, 3 source(s), 632 ms
+      Page externe : vidzy.org (pas une lecture intégrée)
+      Page externe : vidzy.org (pas une lecture intégrée)
+      Page externe : luluvid.com (pas une lecture intégrée)
+  Sélection saison 3, épisode 6 — ID canonique
+    Flux Render : HTTP 200, 3 source(s), 418 ms
+      Page externe : vidzy.org (pas une lecture intégrée)
+      Page externe : vidzy.org (pas une lecture intégrée)
+      Page externe : luluvid.com (pas une lecture intégrée)
+
+=== ANIME SPÉCIAUX | recherche « One Punch Man » ===
+Étape recherche anime : 87 ms, 4 résultat(s)
+Premier résultat : One Punch Man - Specials
+Étape fiche anime : 185 ms; titre=One Punch Man - Specials type=series épisodes=6 sources=12
+  Épisode retenu : saison 0, épisode 1 (Spécial 1 (VF))
+  Source vidzy (fr)
+  Source luluvid (fr)
+Étape résolution Stremio locale : 1 ms, 1 source(s)
+  Lien de lecteur externe — vidzy.org (ce n’est pas un flux lu directement dans Stremio)
+
+=== SYNTHÈSE 30 CAS ===
+FILM: 10 test(s), 59 résultat(s) catalogue Render, 0 épisode(s), 0 flux directs / 53 pages externes Render, médias accessibles 0/0, 116 source(s) trouvée(s) localement, 48 flux assemblé(s) localement, 1 erreur(s) API/type/titre Render
+SÉRIE: 10 test(s), 86 résultat(s) catalogue Render, 116 épisode(s), 0 flux directs / 48 pages externes Render, médias accessibles 0/0, 514 source(s) trouvée(s) localement, 28 flux assemblé(s) localement, 1 erreur(s) API/type/titre Render
+ANIME: 10 test(s), 161 résultat(s) catalogue Render, 164 épisode(s), 0 flux directs / 20 pages externes Render, médias accessibles 0/0, 406 source(s) trouvée(s) localement, 19 flux assemblé(s) localement, 0 erreur(s) API/type/titre Render
+
+Fin. Le rapport distingue les sources annoncées par le site et les sources réellement retournées à Stremio.

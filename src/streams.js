@@ -8,6 +8,7 @@
 const store = require('./store');
 const { fetchText } = require('./http');
 const { probeStream } = require('./probe');
+const { extractUniversalVideoLink } = require('./scraper/playwright');
 const log = require('./logger');
 
 // ──────────────────────────────────────────────
@@ -211,6 +212,36 @@ async function resolveDirectStream(url, pageReferer) {
         }
       }
     } catch {}
+
+    // ─── SOLUTION 2 : Interception réseau native (Playwright) sur page .html ───
+    // Transforme un lien de lecteur (.html) en fichier brut .mp4/.m3u8 avant l'envoi à Stremio.
+    if (/\.html/i.test(url)) {
+      try {
+        const isRender = process.env.RENDER === 'true' || process.env.RENDER === '1';
+        const directVideoLink = await extractUniversalVideoLink(url, {
+          headless: true,
+          gotoTimeout: isRender ? 8000 : 30000,
+          waitMs: 500,
+          maxWait: isRender ? 3 : 10,
+          chromeArgs: isRender ? [
+            '--no-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-gpu',
+            '--disable-background-networking',
+            '--blink-settings=imagesEnabled=false',
+            '--disable-features=site-per-process',
+            '--memory-pressure-off',
+            '--max_old_space_size=256'
+          ] : undefined
+        });
+        if (directVideoLink) {
+          return {
+            url: directVideoLink,
+            streamType: directVideoLink.includes('.m3u8') ? 'hls' : 'mp4'
+          };
+        }
+      } catch {}
+    }
   } catch {}
   return null;
 }

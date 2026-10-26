@@ -9,7 +9,7 @@
   "movieSeriesSite": {
     "enabled": true,
     "name": "French-Stream",
-    "baseUrl": "https://fs26.lol",
+    "baseUrl": "",
     "discoveryUrl": "https://fstream.net/",
     "ajaxSearch": "/engine/ajax/search.php",
     "serieStatic": "/static/series/{id}.js",
