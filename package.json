@@ -13,8 +13,7 @@
   },
   "dependencies": {
     "express": "^4.19.2",
-    "stremio-addon-sdk": "^1.6.5",
-    "playwright": "^1.48.0"
+    "stremio-addon-sdk": "^1.6.5"
   },
   "engines": {
     "node": ">=18"
